@@ -2,6 +2,7 @@ class_name Block extends Node
 
 enum Type {
 	GRASS,
+	COUNT,
 }
 
 enum Face {
@@ -14,21 +15,21 @@ enum Face {
 	COUNT,
 }
 
-static func get_normal(face: Face) -> Vector3:
+static func get_normal(face: Face) -> Vector3i:
 	match face:
 		Face.FORWARD:
-			return Vector3.FORWARD
+			return Vector3i.FORWARD
 		Face.BACK:
-			return Vector3.BACK
+			return Vector3i.BACK
 		Face.LEFT:
-			return Vector3.LEFT
+			return Vector3i.LEFT
 		Face.RIGHT:
-			return Vector3.RIGHT
+			return Vector3i.RIGHT
 		Face.UP:
-			return Vector3.UP
+			return Vector3i.UP
 		Face.DOWN:
-			return Vector3.DOWN
-	return Vector3.FORWARD
+			return Vector3i.DOWN
+	return Vector3i.FORWARD
 
 static func get_vertices(face: Face) -> Array[Vector3]:
 	match face:
@@ -78,5 +79,8 @@ static func get_texcoords(face: Face) -> Array[Vector2]:
 static func get_indices() -> Array[int]:
 	return [0, 1, 2, 0, 2, 3]
 
-static func is_visible(_lhs: Type, _rhs: Type) -> bool:
-	return true
+static func _is_transparent(_type: Type) -> bool:
+	return false
+
+static func is_visible(lhs: Type, rhs: Type) -> bool:
+	return not _is_transparent(lhs) and _is_transparent(rhs)

@@ -14,11 +14,12 @@ static func get_spritesheet() -> Texture2DArray:
 	for y in range(rows):
 		for x in range(columns):
 			# TODO: refactor
-			var layer = Image.create_empty(_SIZE, _SIZE, false, image.get_format())
+			var layer = Image.create_empty(_SIZE, _SIZE, true, image.get_format())
 			for i in range(_SIZE):
 				for j in range(_SIZE):
 					var color = image.get_pixel(x * _SIZE + i, y * _SIZE + j)
 					layer.set_pixel(i, j, color)
+			layer.generate_mipmaps()
 			images.append(layer)
 	var texture_array = Texture2DArray.new()
 	texture_array.create_from_images(images)

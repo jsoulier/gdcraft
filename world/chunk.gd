@@ -25,6 +25,21 @@ func create(new_chunk: bool) -> void:
 	_create()
 	_world.add_child(self)
 
+func _in_bounds(index: Vector3i) -> bool:
+	return \
+		index.x >= 0 and \
+		index.y >= 0 and \
+		index.z >= 0 and \
+		index.x < _SIZE.x and \
+		index.y < _SIZE.y and \
+		index.z < _SIZE.z
+
+func get_block(index: Vector3i) -> Block.Type:
+	return _blocks.get(index, Block.Type.COUNT)
+
+func _get_local_position(index: Vector3i) -> Vector3i:
+	return (index % _SIZE + _SIZE) % _SIZE
+
 func _create() -> void:
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -37,10 +52,19 @@ func _create() -> void:
 			var block_position = Vector3(index)
 			var block_face = i as Block.Face
 			var block_normal = Block.get_normal(block_face)
-			# TODO: look up neighbour
-			if not Block.is_visible(block_type, block_type):
-				continue
-			# TODO: check if a face should be emitted
+			var neighbor_position = index + block_normal
+			var neighbor_type = Block.Type.COUNT
+			if _in_bounds(neighbor_position):
+				neighbor_type = get_block(neighbor_position)
+			else:
+				var neighbor_chunk_index = _index + block_normal
+				var neighbor_chunk = _world.get_chunk(neighbor_chunk_index)
+				if neighbor_chunk != null:
+					var local_position = _get_local_position(neighbor_position)
+					neighbor_type = neighbor_chunk.get_block(local_position)
+			if neighbor_type != Block.Type.COUNT:
+				if not Block.is_visible(block_type, neighbor_type):
+					continue
 			var block_vertices = Block.get_vertices(block_face)
 			var block_face_index = Block.get_face_index(block_type, block_face)
 			var block_texcoords = Block.get_texcoords(block_face)
