@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-@export var speed = 2.0
+@export var speed = 10.0
 @export var sensitivity = 0.001
 @onready var _camera = get_node("Camera3D")
 
@@ -20,6 +20,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta) -> void:
 	var direction = Vector3.ZERO
+	var up = Vector3.ZERO
 	if Input.is_action_pressed("right"):
 		direction.x += 1
 	if Input.is_action_pressed("left"):
@@ -28,8 +29,12 @@ func _physics_process(_delta) -> void:
 		direction.z += 1
 	if Input.is_action_pressed("forward"):
 		direction.z -= 1
+	if Input.is_action_pressed("jump"):
+		up.y += 1
+	if Input.is_action_pressed("crouch"):
+		up.y -= 1
 	direction = direction.normalized()
-	direction = (transform.basis * direction).normalized()
-	velocity.x = direction.x * speed
-	velocity.z = direction.z * speed
+	direction = (_camera.global_transform.basis * direction).normalized()
+	direction = (direction + up).normalized()
+	velocity = direction * speed
 	move_and_slide()

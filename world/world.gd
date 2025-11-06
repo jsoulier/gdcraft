@@ -1,8 +1,8 @@
 extends Node3D
 
 # should always be even
-const LOAD_WIDTH = 1 # +1 for center
-const LOAD_HEIGHT = 1 # +1 for center
+const LOAD_WIDTH = 2 # +1 for center
+const LOAD_HEIGHT = 2 # +1 for center
 @warning_ignore_start("integer_division")
 const LOAD_HALF_WIDTH = LOAD_WIDTH / 2
 const LOAD_HALF_HEIGHT = LOAD_HEIGHT / 2
@@ -12,6 +12,15 @@ const LOAD_HALF_HEIGHT = LOAD_HEIGHT / 2
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _player_chunk_index: Vector3i = Vector3i.MAX
 var generator: Generator = null
+var material: ShaderMaterial = null
+var _spritesheet: Texture2DArray = null
+
+func _ready() -> void:
+	_spritesheet = Spritesheet.get_spritesheet()
+	material = ShaderMaterial.new()
+	material.shader = preload("res://world/chunk.gdshader")
+	#material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.set_shader_parameter("spritesheet", _spritesheet)
 
 func set_generator(type: Generator.Type) -> void:
 	generator = Generator.new(type)
