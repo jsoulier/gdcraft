@@ -14,21 +14,21 @@ enum Face {
 	COUNT,
 }
 
-static func get_normal(face: Face) -> Vector3i:
+static func get_normal(face: Face) -> Vector3:
 	match face:
 		Face.FORWARD:
-			return Vector3i.FORWARD
+			return Vector3.FORWARD
 		Face.BACK:
-			return Vector3i.BACK
+			return Vector3.BACK
 		Face.LEFT:
-			return Vector3i.LEFT
+			return Vector3.LEFT
 		Face.RIGHT:
-			return Vector3i.RIGHT
+			return Vector3.RIGHT
 		Face.UP:
-			return Vector3i.UP
+			return Vector3.UP
 		Face.DOWN:
-			return Vector3i.DOWN
-	return Vector3i.FORWARD
+			return Vector3.DOWN
+	return Vector3.FORWARD
 
 static func get_vertices(face: Face) -> Array[Vector3]:
 	match face:
@@ -74,6 +74,9 @@ static func get_texcoords(face: Face) -> Array[Vector2]:
 		Face.DOWN:
 			return [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
 	return [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+
+static func get_indices() -> Array[int]:
+	return [0, 1, 2, 0, 2, 3]
 
 static func is_visible(_lhs: Type, _rhs: Type) -> bool:
 	return true

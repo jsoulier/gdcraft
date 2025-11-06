@@ -29,8 +29,8 @@ func _superflat(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
 	var blocks: Dictionary[Vector3i, Block.Type] = {}
 	if _index.y != 0:
 		return blocks
-	for x in range(0, Chunk.WIDTH):
-		for z in range(0, Chunk.WIDTH):
+	for x in range(0, Chunk._WIDTH):
+		for z in range(0, Chunk._WIDTH):
 			var index = Vector3i(x, 0, z)
 			blocks[index] = Block.Type.GRASS
 	return blocks
