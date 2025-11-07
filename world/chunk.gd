@@ -2,9 +2,11 @@ class_name Chunk extends StaticBody3D
 
 enum Flag {
 	NONE = 0,
-	GENERATE = 0x01,
-	MESH = 0x02,
-	UNLOAD = 0x04,
+	GENERATING = 1,
+	MESHING = 2,
+	GENERATED = 4,
+	MESHED = 8,
+	UNLOAD = 16,
 }
 
 const WIDTH = 32
@@ -15,35 +17,17 @@ var _blocks: PackedInt32Array
 var _world = null
 var _index: Vector3i
 var _flags = Flag.NONE
-var task_id = 0
+var _task_id = 0
 
 func _init(world, index: Vector3i) -> void:
 	_world = world
 	_index = index
-	set_flag(Flag.GENERATE)
-	set_flag(Flag.MESH)
 	
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		if task_id >= 1:
-			WorkerThreadPool.wait_for_task_completion(task_id)
-			task_id = 0
-
-func generate() -> void:
-	assert(has_flag(Flag.GENERATE))
-	clear_flag(Flag.GENERATE)
-	_blocks = _world.generator.generate(_index)
-
-func mesh() -> void:
-	assert(!has_flag(Flag.GENERATE))
-	assert(has_flag(Flag.MESH))
-	clear_flag(Flag.MESH)
-	if _world.is_ancestor_of(self):
-		_world.remove_child(self)
-		for child in get_children():
-			remove_child(child)
-			child.queue_free()
-	task_id = WorkerThreadPool.add_task(_mesh, true)
+		if _task_id >= 1:
+			WorkerThreadPool.wait_for_task_completion(_task_id)
+			_task_id = 0
 
 func _in_bounds(index: Vector3i) -> bool:
 	return \
@@ -72,7 +56,38 @@ func clear_flag(flag: Flag) -> void:
 func has_flag(flag: Flag) -> bool:
 	return bool(_flags & flag)
 
+func generate() -> void:
+	assert(not has_flag(Flag.GENERATING))
+	assert(not has_flag(Flag.GENERATED))
+	set_flag(Flag.GENERATING)
+	_task_id = WorkerThreadPool.add_task(_generate, false)
+
+func _generate() -> void:
+	_blocks = _world.generator.generate(_index)
+	_generate_deferred.call_deferred()
+
+func _generate_deferred() -> void:
+	if not is_instance_valid(self):
+		return
+	clear_flag.call_deferred(Flag.GENERATING)
+	set_flag.call_deferred(Flag.GENERATED)
+	assert(not has_flag(Flag.MESHED))
+	assert(not has_flag(Flag.MESHING))
+
+func mesh() -> void:
+	assert(not has_flag(Flag.GENERATING))
+	assert(has_flag(Flag.GENERATED))
+	assert(not has_flag(Flag.MESHING))
+	assert(not has_flag(Flag.MESHED))
+	set_flag(Flag.MESHING)
+	if _world.is_ancestor_of(self):
+		_world.remove_child(self)
+	_task_id = WorkerThreadPool.add_task(_mesh, false)
+
 func _mesh() -> void:
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var chunk_position = Vector3(_index * SIZE)
@@ -98,7 +113,8 @@ func _mesh() -> void:
 					else:
 						var neighbor_chunk_index = _index + block_normal
 						var neighbor_chunk = _world.get_chunk(neighbor_chunk_index)
-						if neighbor_chunk != null && not neighbor_chunk.has_flag(Flag.GENERATE):
+						if neighbor_chunk != null:
+							assert(neighbor_chunk.has_flag(Flag.GENERATED))
 							var local_position = _get_local_position(neighbor_position)
 							neighbor_type = neighbor_chunk.get_block(local_position)
 					if neighbor_type != Block.Type.EMPTY:
@@ -124,5 +140,12 @@ func _mesh() -> void:
 	var mesh_instance = MeshInstance3D.new()
 	mesh_instance.mesh = array_mesh
 	mesh_instance.material_override = _world.chunk_material
+	_mesh_deferred.call_deferred(mesh_instance)
+
+func _mesh_deferred(mesh_instance: MeshInstance3D) -> void:
+	if not is_instance_valid(self):
+		return
 	add_child.call_deferred(mesh_instance)
 	_world.add_child.call_deferred(self)
+	clear_flag.call_deferred(Flag.MESHING)
+	set_flag.call_deferred(Flag.MESHED)
