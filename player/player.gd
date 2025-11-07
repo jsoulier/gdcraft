@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-@export var speed = 30.0
+@export var speed = 200.0
 @export var sensitivity = 0.001
 @onready var _camera = get_node("Camera3D")
 

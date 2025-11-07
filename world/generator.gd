@@ -16,7 +16,7 @@ func _init(type: Type) -> void:
 	_generator.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	_generator.frequency = 0.05
 
-func generate(index: Vector3i) -> PackedInt32Array:
+func generate(index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
 	match _type:
 		Type.SUPERFLAT:
 			return _superflat(index)
@@ -26,32 +26,23 @@ func generate(index: Vector3i) -> PackedInt32Array:
 			return _noise(index)
 	return _empty(index)
 
-func _allocate() -> PackedInt32Array:
-	var blocks = PackedInt32Array()
-	blocks.resize(Chunk.WIDTH * Chunk.HEIGHT * Chunk.WIDTH)
-	blocks.fill(Block.Type.EMPTY)
-	return blocks
+func _empty(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
+	return {}
 
-func _empty(_index: Vector3i) -> PackedInt32Array:
-	return _allocate()
-
-func _superflat(_index: Vector3i) -> PackedInt32Array:
-	var blocks = _allocate()
+func _superflat(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
+	var blocks: Dictionary[Vector3i, Block.Type] = {}
 	if _index.y != 0:
 		return blocks
 	for x in range(0, Chunk.WIDTH):
 		for z in range(0, Chunk.WIDTH):
-			var idx = x + Chunk.WIDTH * (z + Chunk.WIDTH * 0)
-			blocks[idx] = Block.Type.GRASS
+			blocks[Vector3i(x, 0, z)] = Block.Type.GRASS
 	return blocks
 
-func _1x1x1(_index: Vector3i) -> PackedInt32Array:
-	var blocks = _allocate()
-	blocks[0] = Block.Type.GRASS
-	return blocks
+func _1x1x1(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
+	return {Vector3i(0, 0, 0): Block.Type.GRASS}
 	
-func _noise(_index: Vector3i) -> PackedInt32Array:
-	var blocks = _allocate()
+func _noise(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
+	var blocks: Dictionary[Vector3i, Block.Type] = {}
 	var max_height = 10
 	var start_y = _index.y * Chunk.HEIGHT
 	for x in range(0, Chunk.WIDTH):
@@ -63,7 +54,7 @@ func _noise(_index: Vector3i) -> PackedInt32Array:
 			var end_y = min(start_y + Chunk.HEIGHT, noise_y)
 			for y in range(start_y, end_y):
 				var world_y = start_y + y
-				var index = Chunk.get_block_index(Vector3i(x, y - start_y, z)) 
+				var index = Vector3i(x, y - start_y, z)
 				if world_y == noise_y - 1:
 					blocks[index] = Block.Type.GRASS
 				elif world_y > noise_y - 4:
