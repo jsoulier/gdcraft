@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "godotmc",
+            "name": "gdcraft",
             "type": "godot",
             "request": "launch",
             "project": "",

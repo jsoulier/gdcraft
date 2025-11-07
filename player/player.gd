@@ -1,11 +1,13 @@
 extends CharacterBody3D
 
-@export var speed = 10.0
+@export var speed = 30.0
 @export var sensitivity = 0.001
 @onready var _camera = get_node("Camera3D")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _unhandled_input(event: InputEvent) -> void:

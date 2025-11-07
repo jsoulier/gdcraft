@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="godotmc"
+config/name="gdcraft"
 run/main_scene="uid://6dp6buv7r750"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
