@@ -1,8 +1,10 @@
 class_name Block extends Node
 
 enum Type {
+	EMPTY,
 	GRASS,
-	COUNT,
+	DIRT,
+	STONE,
 }
 
 enum Face {
@@ -17,10 +19,11 @@ enum Face {
 
 static func get_normal(face: Face) -> Vector3i:
 	match face:
+		# TODO: why are these reversed?
 		Face.FORWARD:
-			return Vector3i.FORWARD
-		Face.BACK:
 			return Vector3i.BACK
+		Face.BACK:
+			return Vector3i.FORWARD
 		Face.LEFT:
 			return Vector3i.LEFT
 		Face.RIGHT:
@@ -58,6 +61,10 @@ static func get_face_index(type: Type, face: Face) -> Vector2:
 					return Vector2(1, 0)
 				Face.FORWARD, Face.BACK, Face.LEFT, Face.RIGHT:
 					return Vector2(2, 0)
+		Type.DIRT:
+			return Vector2(1, 0)
+		Type.STONE:
+			return Vector2(3, 0)
 	return Vector2i(0, 0)
 
 static func get_texcoords(face: Face) -> Array[Vector2]:

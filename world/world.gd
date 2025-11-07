@@ -1,7 +1,7 @@
 extends Node3D
 
-const _WIDTH = 8 # +1
-const _HEIGHT = 8 # +1
+const _WIDTH = 4 # +1
+const _HEIGHT = 4 # +1
 const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
 @onready var _player = get_node("Player")
@@ -23,7 +23,7 @@ func get_chunk(index: Vector3i) -> Chunk:
 	return _chunks.get(index, null)
 
 func _process(_delta: float) -> void:
-	var chunk_index = Vector3i(_player.position) / Chunk._SIZE
+	var chunk_index = Vector3i(_player.position) / Chunk.SIZE
 	if _player_chunk_index == chunk_index:
 		return
 	_player_chunk_index = chunk_index
