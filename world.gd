@@ -5,23 +5,34 @@ const _HEIGHT = 2 # +1
 const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
 @onready var _player = get_node("Player")
-var _chunk_shader = preload("res://world/chunk.gdshader")
+var _opaque_shader = preload("res://opaque.gdshader")
+var _transparent_shader = preload("res://transparent.gdshader")
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _player_chunk_index: Vector3i = Vector3i.MAX
 var _generated: bool = false
 var _meshed: bool = false
 var generator: Generator = null
-var chunk_material: ShaderMaterial = null
+var opaque_material: ShaderMaterial = null
+var transparent_material: ShaderMaterial = null
 var _task_ids: Dictionary[int, bool] = {}
 
 func _ready() -> void:
-	chunk_material = ShaderMaterial.new()
-	chunk_material.shader = _chunk_shader
-	chunk_material.set_shader_parameter("spritesheet", Spritesheet.get_spritesheet())
+	var spritesheet = Spritesheet.get_spritesheet()
+	opaque_material = ShaderMaterial.new()
+	opaque_material.shader = _opaque_shader
+	opaque_material.set_shader_parameter("spritesheet", spritesheet)
+	opaque_material.render_priority = 1
+	transparent_material = ShaderMaterial.new()
+	transparent_material.shader = _transparent_shader
+	transparent_material.set_shader_parameter("spritesheet", spritesheet)
+	transparent_material.render_priority = 0
 
 func _notification(what: int) -> void:
-	if what != NOTIFICATION_PREDELETE:
+	if what == NOTIFICATION_PREDELETE:
+		assert(_task_ids.is_empty())
+	if what != NOTIFICATION_WM_CLOSE_REQUEST:
 		return
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
 	for task_id in _task_ids:
 		WorkerThreadPool.wait_for_task_completion(task_id)
 

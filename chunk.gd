@@ -9,6 +9,12 @@ enum Flag {
 	UNLOAD = 16,
 }
 
+enum MeshType {
+	OPAQUE,
+	TRANSPARENT,
+	COUNT,
+}
+
 const WIDTH = 32
 const HEIGHT = 32
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
@@ -24,7 +30,9 @@ func _init(world, index: Vector3i) -> void:
 	_index = index
 	
 func _notification(what: int) -> void:
-	if what != NOTIFICATION_PREDELETE:
+	if what == NOTIFICATION_PREDELETE:
+		assert(_task_id == 0)
+	if what != NOTIFICATION_WM_CLOSE_REQUEST:
 		return
 	if _task_id >= 1:
 		WorkerThreadPool.wait_for_task_completion(_task_id)
@@ -84,16 +92,18 @@ func _mesh() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-	var surface_tool = SurfaceTool.new()
-	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var surface_tools = []
+	for mesh_type in range(MeshType.COUNT):
+		var surface_tool = SurfaceTool.new()
+		surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+		surface_tools.append(surface_tool)
 	var chunk_position = Vector3(_index * SIZE)
-	var chunk_vertices: Array[Vector3] = []
+	var all_chunk_vertices = [[], []]
 	for index in _blocks:
 		var block_type = get_block(index)
 		if block_type == Block.Type.EMPTY:
 			continue
 		for i in range(Block.Face.COUNT):
-			var first_index = chunk_vertices.size()
 			var block_position = Vector3(index)
 			var block_face = i as Block.Face
 			if block_position.y == 0 and block_face == Block.Face.DOWN:
@@ -120,6 +130,12 @@ func _mesh() -> void:
 			assert(block_vertices.size() == 4)
 			assert(block_texcoords.size() == 4)
 			assert(block_indices.size() == 6)
+			var mesh_type = MeshType.OPAQUE
+			if Block.is_transparent(block_type):
+				mesh_type = MeshType.TRANSPARENT
+			var surface_tool = surface_tools[mesh_type]
+			var chunk_vertices = all_chunk_vertices[mesh_type]
+			var first_index = chunk_vertices.size()
 			surface_tool.set_normal(block_normal)
 			for j in range(4):
 				var vertex = chunk_position + block_position + block_vertices[j]
@@ -129,11 +145,15 @@ func _mesh() -> void:
 				chunk_vertices.append(vertex)
 			for j in range(6):
 				surface_tool.add_index(first_index + block_indices[j])
-	var array_mesh = surface_tool.commit()
-	var mesh_instance = MeshInstance3D.new()
-	mesh_instance.mesh = array_mesh
-	mesh_instance.material_override = _world.chunk_material
-	add_child.call_deferred(mesh_instance)
+	for mesh_type in range(MeshType.COUNT):
+		var surface_tool = surface_tools[mesh_type]
+		var array_mesh = surface_tool.commit()
+		var mesh_instance = MeshInstance3D.new()
+		mesh_instance.mesh = array_mesh
+		mesh_instance.material_override = _world.opaque_material
+		if mesh_type == MeshType.TRANSPARENT:
+			mesh_instance.material_override = _world.transparent_material
+		add_child.call_deferred(mesh_instance)
 	_world.add_child.call_deferred(self)
 	clear_flag.call_deferred(Flag.MESHING)
 	set_flag.call_deferred(Flag.MESHED)

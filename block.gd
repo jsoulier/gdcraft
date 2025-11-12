@@ -5,6 +5,7 @@ enum Type {
 	GRASS,
 	DIRT,
 	STONE,
+	WATER,
 }
 
 enum Face {
@@ -65,6 +66,8 @@ static func get_face_index(type: Type, face: Face) -> Vector2:
 			return Vector2(1, 0)
 		Type.STONE:
 			return Vector2(3, 0)
+		Type.WATER:
+			return Vector2(4, 0)
 	return Vector2i(0, 0)
 
 static func get_texcoords(face: Face) -> Array[Vector2]:
@@ -86,8 +89,21 @@ static func get_texcoords(face: Face) -> Array[Vector2]:
 static func get_indices() -> Array[int]:
 	return [0, 1, 2, 0, 2, 3]
 
-static func _is_transparent(_type: Type) -> bool:
+static func is_transparent(type: Type) -> bool:
+	match type:
+		Type.WATER:
+			return true
 	return false
 
 static func is_visible(lhs: Type, rhs: Type) -> bool:
-	return not _is_transparent(lhs) and _is_transparent(rhs)
+	return not is_transparent(lhs) and is_transparent(rhs)
+
+static func _test_is_visible():
+	assert(not is_visible(Type.GRASS, Type.GRASS))
+	assert(not is_visible(Type.GRASS, Type.DIRT))
+	assert(not is_visible(Type.DIRT, Type.DIRT))
+	assert(not is_visible(Type.DIRT, Type.GRASS))
+	assert(is_visible(Type.GRASS, Type.WATER))
+	assert(is_visible(Type.DIRT, Type.WATER))
+	assert(not is_visible(Type.WATER, Type.WATER))
+	assert(not is_visible(Type.WATER, Type.GRASS))

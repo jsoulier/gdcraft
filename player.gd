@@ -1,7 +1,8 @@
 extends CharacterBody3D
 
-@export var speed = 200.0
-@export var sensitivity = 0.001
+@export var walk_speed = 5.0
+@export var sprint_speed = 200.0
+@export var rotate_speed = 0.001
 @onready var _camera = get_node("Camera3D")
 
 func _notification(what: int) -> void:
@@ -17,12 +18,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseMotion:
-			rotate_y(-event.relative.x * sensitivity)
-			_camera.rotate_x(-event.relative.y * sensitivity)
+			rotate_y(-event.relative.x * rotate_speed)
+			_camera.rotate_x(-event.relative.y * rotate_speed)
 
 func _physics_process(_delta) -> void:
 	var direction = Vector3.ZERO
 	var up = Vector3.ZERO
+	var speed = walk_speed
 	if Input.is_action_pressed("right"):
 		direction.x += 1
 	if Input.is_action_pressed("left"):
@@ -35,6 +37,8 @@ func _physics_process(_delta) -> void:
 		up.y += 1
 	if Input.is_action_pressed("crouch"):
 		up.y -= 1
+	if Input.is_action_pressed("sprint"):
+		speed = sprint_speed
 	direction = direction.normalized()
 	direction = (_camera.global_transform.basis * direction).normalized()
 	direction = (direction + up).normalized()
