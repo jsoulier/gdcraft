@@ -6,8 +6,8 @@ const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
 @export var generator_type = Generator.Type.EMPTY
 @onready var _player = $Player
-var _opaque_shader = preload("res://opaque.gdshader")
-var _transparent_shader = preload("res://transparent.gdshader")
+var _opaque_shader = preload("res://resources/opaque.gdshader")
+var _transparent_shader = preload("res://resources/transparent.gdshader")
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _player_chunk_index: Vector3i = Vector3i.MAX
 var _generated: bool = false
@@ -105,6 +105,7 @@ func _process(_delta: float) -> void:
 					free = false
 					break
 		if free:
+			chunk.set_flag(Chunk.Flag.UNLOADING)
 			chunk.queue_free()
 			_chunks.erase(index)
 

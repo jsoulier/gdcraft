@@ -2,7 +2,7 @@ class_name Spritesheet extends Node
 
 const _SIZE = 16
 
-static var _spritesheet = preload("res://spritesheet.png")
+static var _spritesheet = preload("res://resources/spritesheet.png")
 
 static func get_spritesheet() -> Texture2DArray:
 	var image = _spritesheet.get_image()

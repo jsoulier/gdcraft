@@ -54,13 +54,13 @@ func _noise(_index: Vector3i) -> Dictionary[Vector3i, Block.Type]:
 			var ground_y = int((noise + 1.0) * 0.5 * max_ground_y)
 			var end_y = min(start_y + Chunk.HEIGHT, max(ground_y, sea_level))
 			for y in range(start_y, end_y):
-				var world_y = start_y + y
 				var index = Vector3i(x, y - start_y, z)
-				if world_y > ground_y:
+				assert(Chunk.in_bounds(index))
+				if y > ground_y:
 					blocks[index] = Block.Type.WATER
-				elif world_y == ground_y - 1:
+				elif y == ground_y - 1:
 					blocks[index] = Block.Type.GRASS
-				elif world_y > ground_y - 4:
+				elif y > ground_y - 4:
 					blocks[index] = Block.Type.DIRT
 				else:
 					blocks[index] = Block.Type.STONE

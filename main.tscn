@@ -1,9 +1,9 @@
 [gd_scene load_steps=7 format=3 uid="uid://6dp6buv7r750"]
 
-[ext_resource type="Script" uid="uid://b1qfh1l3on7qh" path="res://world.gd" id="1_h2yge"]
-[ext_resource type="Environment" uid="uid://bo4wh8vs4vpq4" path="res://environment.tres" id="2_1bvp3"]
-[ext_resource type="Script" uid="uid://bkssdxvh3c6on" path="res://player.gd" id="3_lquwl"]
-[ext_resource type="Material" uid="uid://cpmld21ucup4p" path="res://raycast_material.tres" id="4_1bvp3"]
+[ext_resource type="Script" uid="uid://b1qfh1l3on7qh" path="res://scripts/world.gd" id="1_1bvp3"]
+[ext_resource type="Environment" uid="uid://bo4wh8vs4vpq4" path="res://resources/environment.tres" id="2_1bvp3"]
+[ext_resource type="Script" uid="uid://bkssdxvh3c6on" path="res://scripts/player.gd" id="3_lquwl"]
+[ext_resource type="Material" uid="uid://cpmld21ucup4p" path="res://resources/raycast_material.tres" id="4_1bvp3"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_1bvp3"]
 height = 1.75
@@ -40,7 +40,7 @@ custom_minimum_size = Vector2(4, 16)
 layout_mode = 2
 
 [node name="World" type="Node3D" parent="."]
-script = ExtResource("1_h2yge")
+script = ExtResource("1_1bvp3")
 generator_type = 3
 
 [node name="Sun" type="DirectionalLight3D" parent="World"]
