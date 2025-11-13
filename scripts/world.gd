@@ -95,6 +95,7 @@ func _process(_delta: float) -> void:
 			continue
 		if chunk.has_flag(Chunk.Flag.WORKING):
 			continue
+		assert(chunk._task_id == 0)
 		var free = true
 		for i in range(Block.Face.COUNT):
 			var block_normal = Block.get_normal(i as Block.Face)

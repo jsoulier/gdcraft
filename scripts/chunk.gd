@@ -41,13 +41,7 @@ func _notification(what: int) -> void:
 		WorkerThreadPool.wait_for_task_completion(_task_id)
 
 static func in_bounds(index: Vector3i) -> bool:
-	return \
-		index.x >= 0 and \
-		index.y >= 0 and \
-		index.z >= 0 and \
-		index.x < SIZE.x and \
-		index.y < SIZE.y and \
-		index.z < SIZE.z
+	return index >= Vector3i.ZERO and index < SIZE
 
 func get_block(index: Vector3i) -> Block.Type:
 	return _blocks.get(index, Block.Type.EMPTY)
@@ -69,11 +63,6 @@ func set_block(index: Vector3i, type: Block.Type) -> void:
 	_blocks[index] = type
 	remesh()
 
-func remesh() -> void:
-	assert(not has_flag(Flag.WORKING))
-	clear_flag(Flag.MESHED)
-	set_flag(Flag.REMESH)
-
 func generate() -> void:
 	assert(_task_id == 0)
 	assert(not has_flag(Flag.WORKING))
@@ -86,10 +75,9 @@ func _generate() -> void:
 	assert(not has_flag(Flag.UNLOADING))
 	assert(not has_flag(Flag.MESHED))
 	_blocks = _world.generator.generate(_index)
-	clear_flag.call_deferred(Flag.GENERATING)
+	_remove_id.call_deferred()
 	set_flag.call_deferred(Flag.GENERATED)
-	_world.remove_task_id.call_deferred(_task_id)
-	_task_id = 0
+	clear_flag.call_deferred(Flag.GENERATING)
 	assert(not has_flag(Flag.UNLOADING))
 
 func mesh() -> void:
@@ -134,7 +122,7 @@ func _mesh() -> void:
 			var neighbor_position = index + block_normal
 			var neighbor_type = Block.Type.EMPTY
 			if in_bounds(neighbor_position):
-				neighbor_type = _blocks.get(neighbor_position, Block.Type.EMPTY)
+				neighbor_type = get_block(neighbor_position)
 			else:
 				var neighbor_chunk_index = _index + block_normal
 				var neighbor_chunk = _world.get_chunk(neighbor_chunk_index)
@@ -195,10 +183,18 @@ func _mesh() -> void:
 		concave_shape.set_faces(faces)
 		collision_shape.shape = concave_shape
 		add_child.call_deferred(collision_shape)
-	_world.add_child.call_deferred(self)
-	clear_flag.call_deferred(Flag.MESHING)
+	_remove_id.call_deferred()
 	set_flag.call_deferred(Flag.MESHED)
-	if _task_id:
-		_world.remove_task_id.call_deferred(_task_id)
-		_task_id = 0
+	clear_flag.call_deferred(Flag.MESHING)
+	_world.add_child.call_deferred(self)
 	assert(not has_flag(Flag.UNLOADING))
+
+func _remove_id():
+	if _task_id:
+		_world.remove_task_id(_task_id)
+		_task_id = 0
+
+func remesh() -> void:
+	assert(not has_flag(Flag.WORKING))
+	clear_flag(Flag.MESHED)
+	set_flag(Flag.REMESH)
