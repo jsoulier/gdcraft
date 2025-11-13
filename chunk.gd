@@ -7,6 +7,8 @@ enum Flag {
 	GENERATED = 4,
 	MESHED = 8,
 	UNLOAD = 16,
+	REMESH = 32,
+	WORKING = GENERATING | MESHING
 }
 
 enum MeshType {
@@ -15,8 +17,8 @@ enum MeshType {
 	COUNT,
 }
 
-const WIDTH = 32
-const HEIGHT = 32
+const WIDTH = 10
+const HEIGHT = 10
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
 
 var _blocks: Dictionary[Vector3i, Block.Type] = {}
@@ -37,7 +39,7 @@ func _notification(what: int) -> void:
 	if _task_id >= 1:
 		WorkerThreadPool.wait_for_task_completion(_task_id)
 
-func _in_bounds(index: Vector3i) -> bool:
+static func _in_bounds(index: Vector3i) -> bool:
 	return \
 		index.x >= 0 and \
 		index.y >= 0 and \
@@ -60,6 +62,19 @@ func clear_flag(flag: Flag) -> void:
 
 func has_flag(flag: Flag) -> bool:
 	return bool(_flags & flag)
+
+func set_block(index: Vector3i, type: Block.Type) -> void:
+	assert(_in_bounds(index))
+	if type != Block.Type.EMPTY:
+		_blocks[index] = type
+	else:
+		_blocks.erase(index)
+	remesh()
+
+func remesh() -> void:
+	assert(not has_flag(Flag.WORKING))
+	clear_flag(Flag.MESHED)
+	set_flag(Flag.REMESH)
 
 func generate() -> void:
 	assert(not has_flag(Flag.GENERATING))
@@ -85,6 +100,9 @@ func mesh() -> void:
 	set_flag(Flag.MESHING)
 	if _world.is_ancestor_of(self):
 		_world.remove_child(self)
+	if has_flag(Flag.REMESH):
+		_mesh()
+		return
 	_task_id = WorkerThreadPool.add_task(_mesh, false)
 	_world.add_task_id(_task_id)
 
@@ -106,8 +124,9 @@ func _mesh() -> void:
 		for i in range(Block.Face.COUNT):
 			var block_position = Vector3(index)
 			var block_face = i as Block.Face
-			if block_position.y == 0 and block_face == Block.Face.DOWN:
-				continue
+			if block_position.y == 0 and chunk_position.y == 0:
+				if block_face == Block.Face.DOWN:
+					continue
 			var block_normal = Block.get_normal(block_face)
 			var neighbor_position = index + block_normal
 			var neighbor_type = Block.Type.EMPTY
@@ -154,8 +173,23 @@ func _mesh() -> void:
 		if mesh_type == MeshType.TRANSPARENT:
 			mesh_instance.material_override = _world.transparent_material
 		add_child.call_deferred(mesh_instance)
+	# TODO: refactor
+	var opaque_vertices = all_chunk_vertices[MeshType.OPAQUE]
+	if opaque_vertices.size() > 0:
+		var collision_shape = CollisionShape3D.new()
+		var concave_shape = ConcavePolygonShape3D.new()
+		var faces = PackedVector3Array()
+		var indices = Block.get_indices()
+		for i in range(0, opaque_vertices.size(), 4):
+			for j in indices:
+				faces.append(opaque_vertices[i + j])
+		concave_shape.set_faces(faces)
+		collision_shape.shape = concave_shape
+		add_child.call_deferred(collision_shape)
 	_world.add_child.call_deferred(self)
 	clear_flag.call_deferred(Flag.MESHING)
+	clear_flag.call_deferred(Flag.REMESH)
 	set_flag.call_deferred(Flag.MESHED)
-	_world.remove_task_id.call_deferred(_task_id)
-	_task_id = 0
+	if _task_id:
+		_world.remove_task_id.call_deferred(_task_id)
+		_task_id = 0

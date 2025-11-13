@@ -6,6 +6,8 @@ static var _spritesheet = preload("res://spritesheet.png")
 
 static func get_spritesheet() -> Texture2DArray:
 	var image = _spritesheet.get_image()
+	if image.is_compressed():
+		image.decompress()
 	@warning_ignore_start("integer_division")
 	var columns = image.get_width() / _SIZE 
 	var rows = image.get_height() / _SIZE 

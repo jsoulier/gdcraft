@@ -1,10 +1,11 @@
 extends Node3D
 
-const _WIDTH = 8 # +1
-const _HEIGHT = 2 # +1
+const _WIDTH = 20 # +1
+const _HEIGHT = 10 # +1
 const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
-@onready var _player = get_node("Player")
+@export var generator_type = Generator.Type.EMPTY
+@onready var _player = $Player
 var _opaque_shader = preload("res://opaque.gdshader")
 var _transparent_shader = preload("res://transparent.gdshader")
 var _chunks: Dictionary[Vector3i, Chunk] = {}
@@ -17,6 +18,7 @@ var transparent_material: ShaderMaterial = null
 var _task_ids: Dictionary[int, bool] = {}
 
 func _ready() -> void:
+	generator = Generator.new(generator_type)
 	var spritesheet = Spritesheet.get_spritesheet()
 	opaque_material = ShaderMaterial.new()
 	opaque_material.shader = _opaque_shader
@@ -35,9 +37,6 @@ func _notification(what: int) -> void:
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
 	for task_id in _task_ids:
 		WorkerThreadPool.wait_for_task_completion(task_id)
-
-func set_generator(type: Generator.Type) -> void:
-	generator = Generator.new(type)
 
 func get_chunk(index: Vector3i) -> Chunk:
 	return _chunks.get(index, null)
@@ -94,7 +93,7 @@ func _process(_delta: float) -> void:
 		if not chunk.has_flag(Chunk.Flag.UNLOAD):
 			chunk.set_flag(Chunk.Flag.UNLOAD)
 			continue
-		if chunk.has_flag(Chunk.Flag.GENERATING) or chunk.has_flag(Chunk.Flag.MESHING):
+		if chunk.has_flag(Chunk.Flag.WORKING):
 			continue
 		var free = true
 		for i in range(Block.Face.COUNT):
@@ -108,3 +107,34 @@ func _process(_delta: float) -> void:
 		if free:
 			chunk.queue_free()
 			_chunks.erase(index)
+
+func _remesh(index: Vector3i) -> void:
+	var chunk = get_chunk(index)
+	if not chunk:
+		return
+	if chunk.has_flag(Chunk.Flag.WORKING):
+		return
+	chunk.remesh()
+
+func set_block(index: Vector3i, type: Block.Type) -> void:
+	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())
+	var block_index = index - chunk_index * Chunk.SIZE
+	var chunk = get_chunk(chunk_index)
+	if not chunk:
+		return
+	if chunk.has_flag(Chunk.Flag.WORKING):
+		return
+	chunk.set_block(block_index, type)
+	_meshed = false
+	if block_index.x == 0:
+		_remesh(chunk_index - Vector3i(1, 0, 0))
+	elif block_index.x == Chunk.SIZE.x - 1:
+		_remesh(chunk_index + Vector3i(1, 0, 0))
+	if block_index.y == 0:
+		_remesh(chunk_index - Vector3i(0, 1, 0))
+	elif block_index.y == Chunk.SIZE.y - 1:
+		_remesh(chunk_index + Vector3i(0, 1, 0))
+	if block_index.z == 0:
+		_remesh(chunk_index - Vector3i(0, 0, 1))
+	elif block_index.z == Chunk.SIZE.z - 1:
+		_remesh(chunk_index + Vector3i(0, 0, 1))
