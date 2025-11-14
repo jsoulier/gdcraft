@@ -41,7 +41,8 @@ func _notification(what: int) -> void:
 		WorkerThreadPool.wait_for_task_completion(_task_id)
 
 static func in_bounds(index: Vector3i) -> bool:
-	return index >= Vector3i.ZERO and index < SIZE
+	return index.x >= 0 and index.y >= 0 and index.z >= 0 \
+		and index.x < SIZE.x and index.y < SIZE.y and index.z < SIZE.z;
 
 func get_block(index: Vector3i) -> Block.Type:
 	return _blocks.get(index, Block.Type.EMPTY)

@@ -1,11 +1,12 @@
 class_name Block extends Node
 
 enum Type {
-	EMPTY,
 	GRASS,
 	DIRT,
 	STONE,
 	WATER,
+	COUNT,
+	EMPTY,
 }
 
 enum Face {

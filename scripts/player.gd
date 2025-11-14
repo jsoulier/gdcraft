@@ -5,14 +5,19 @@ extends CharacterBody3D
 @export var rotate_speed = 0.001
 var _raycast_break_position: Vector3i
 var _raycast_place_position: Vector3i
+var _block_type = Block.Type.GRASS
 @onready var _head = $Head
 @onready var _raycast = $Head/RayCast3D
 @onready var _raycast_block = $RayCastBlock
-@onready var _world = $".."
+@onready var _collision_shape = $CollisionShape3D
+
+signal switch_block(type: Block.Type)
+signal set_block(index: Vector3i, type: Block.Type)
 
 func _ready() -> void:
-	# TODO: remove
 	position.y = 30
+	_switch_block(0)
+	_collision_shape.disabled = true
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
@@ -20,15 +25,22 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
+func _switch_block(delta: int) -> void:
+	_block_type = ((_block_type + delta) % Block.Type.COUNT) as Block.Type
+	emit_signal(&"switch_block", _block_type)
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		if _raycast.is_colliding():
-			if event.is_action_pressed("place"):
-				_world.set_block(_raycast_place_position, Block.Type.GRASS)
-			elif event.is_action_pressed("break"):
-				_world.set_block(_raycast_break_position, Block.Type.EMPTY)
-	elif event.is_action_pressed("unfocus"):
+			if event.is_action_pressed(&"place"):
+				emit_signal(&"set_block", _raycast_place_position, _block_type)
+			elif event.is_action_pressed(&"break"):
+				emit_signal(&"set_block", _raycast_break_position, Block.Type.EMPTY)
+		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP \
+			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			_switch_block(event.factor)
+	elif event.is_action_pressed(&"unfocus"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseMotion:
@@ -39,19 +51,19 @@ func _physics_process(_delta) -> void:
 	var direction = Vector3.ZERO
 	var up = Vector3.ZERO
 	var speed = walk_speed
-	if Input.is_action_pressed("right"):
+	if Input.is_action_pressed(&"right"):
 		direction.x += 1
-	if Input.is_action_pressed("left"):
+	if Input.is_action_pressed(&"left"):
 		direction.x -= 1
-	if Input.is_action_pressed("back"):
+	if Input.is_action_pressed(&"back"):
 		direction.z += 1
-	if Input.is_action_pressed("forward"):
+	if Input.is_action_pressed(&"forward"):
 		direction.z -= 1
-	if Input.is_action_pressed("jump"):
+	if Input.is_action_pressed(&"jump"):
 		up.y += 1
-	if Input.is_action_pressed("crouch"):
+	if Input.is_action_pressed(&"crouch"):
 		up.y -= 1
-	if Input.is_action_pressed("sprint"):
+	if Input.is_action_pressed(&"sprint"):
 		speed = sprint_speed
 	direction = direction.normalized()
 	direction = (_head.global_transform.basis * direction).normalized()

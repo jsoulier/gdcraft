@@ -118,7 +118,7 @@ func _remesh(index: Vector3i) -> void:
 		return
 	chunk.remesh()
 
-func set_block(index: Vector3i, type: Block.Type) -> void:
+func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
 	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())
 	var block_index = index - chunk_index * Chunk.SIZE
 	var chunk = get_chunk(chunk_index)
