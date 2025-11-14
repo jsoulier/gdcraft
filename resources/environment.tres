@@ -5,9 +5,8 @@
 [resource]
 background_mode = 2
 sky = ExtResource("1_0wybp")
+ssr_enabled = true
 ssao_enabled = true
 ssao_radius = 1.05
 ssao_light_affect = 1.0
 ssao_ao_channel_affect = 0.8
-fog_sky_affect = 0.1
-volumetric_fog_density = 0.02

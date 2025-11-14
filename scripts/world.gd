@@ -6,28 +6,28 @@ const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
 @export var generator_type = Generator.Type.EMPTY
 @onready var _player = $Player
-var _opaque_shader = preload("res://resources/opaque.gdshader")
-var _transparent_shader = preload("res://resources/transparent.gdshader")
+var _default_shader = preload("res://resources/default.gdshader")
+var _water_shader = preload("res://resources/water.gdshader")
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _player_chunk_index: Vector3i = Vector3i.MAX
 var _generated: bool = false
 var _meshed: bool = false
 var generator: Generator = null
-var opaque_material: ShaderMaterial = null
-var transparent_material: ShaderMaterial = null
+var default_material: ShaderMaterial = null
+var water_material: ShaderMaterial = null
 var _task_ids: Dictionary[int, bool] = {}
 
 func _ready() -> void:
 	generator = Generator.new(generator_type)
 	var spritesheet = Spritesheet.get_spritesheet()
-	opaque_material = ShaderMaterial.new()
-	opaque_material.shader = _opaque_shader
-	opaque_material.set_shader_parameter("spritesheet", spritesheet)
-	opaque_material.render_priority = 1
-	transparent_material = ShaderMaterial.new()
-	transparent_material.shader = _transparent_shader
-	transparent_material.set_shader_parameter("spritesheet", spritesheet)
-	transparent_material.render_priority = 0
+	default_material = ShaderMaterial.new()
+	default_material.shader = _default_shader
+	default_material.set_shader_parameter("spritesheet", spritesheet)
+	default_material.render_priority = 0
+	water_material = ShaderMaterial.new()
+	water_material.shader = _water_shader
+	water_material.set_shader_parameter("spritesheet", spritesheet)
+	water_material.render_priority = 1
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:

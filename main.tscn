@@ -46,19 +46,33 @@ layout_mode = 2
 custom_minimum_size = Vector2(4, 16)
 layout_mode = 2
 
-[node name="Block" type="TextureRect" parent="HUD"]
-texture_filter = 1
+[node name="BlockHorizontal" type="HBoxContainer" parent="HUD"]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
 offset_top = -120.0
 offset_right = 120.0
-offset_bottom = -20.0
 grow_vertical = 0
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="BlockVertical" type="VBoxContainer" parent="HUD/BlockHorizontal"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="Texture" type="TextureRect" parent="HUD/BlockHorizontal/BlockVertical"]
+texture_filter = 1
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
 texture = SubResource("AtlasTexture_7mycd")
 expand_mode = 1
+
+[node name="Text" type="Label" parent="HUD/BlockHorizontal/BlockVertical"]
+layout_mode = 2
+text = "block"
+horizontal_alignment = 1
 
 [node name="World" type="Node3D" parent="."]
 script = ExtResource("1_1bvp3")

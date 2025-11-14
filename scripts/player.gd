@@ -26,7 +26,8 @@ func _notification(what: int) -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _switch_block(delta: int) -> void:
-	_block_type = ((_block_type + delta) % Block.Type.COUNT) as Block.Type
+	var count := Block.Type.COUNT
+	_block_type = ((_block_type + delta + count) % count) as Block.Type
 	emit_signal(&"switch_block", _block_type)
 
 func _input(event: InputEvent) -> void:
@@ -37,9 +38,11 @@ func _input(event: InputEvent) -> void:
 				emit_signal(&"set_block", _raycast_place_position, _block_type)
 			elif event.is_action_pressed(&"break"):
 				emit_signal(&"set_block", _raycast_break_position, Block.Type.EMPTY)
-		if event.pressed and (event.button_index == MOUSE_BUTTON_WHEEL_UP \
-			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
-			_switch_block(event.factor)
+		if event.pressed:
+			if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_switch_block(-event.factor)
+			elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_switch_block(event.factor)
 	elif event.is_action_pressed(&"unfocus"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:

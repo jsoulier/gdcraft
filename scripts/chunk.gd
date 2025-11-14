@@ -13,8 +13,8 @@ enum Flag {
 }
 
 enum MeshType {
-	OPAQUE,
-	TRANSPARENT,
+	DEFAULT,
+	WATER,
 	COUNT,
 }
 
@@ -138,9 +138,9 @@ func _mesh() -> void:
 			var block_texcoords = Block.get_texcoords(block_face)
 			assert(block_vertices.size() == 4)
 			assert(block_texcoords.size() == 4)
-			var mesh_type = MeshType.OPAQUE
-			if Block.is_transparent(block_type):
-				mesh_type = MeshType.TRANSPARENT
+			var mesh_type = MeshType.DEFAULT
+			if block_type == Block.Type.WATER:
+				mesh_type = MeshType.WATER
 			var vertices = chunk_vertices[mesh_type]
 			var normals = chunk_normals[mesh_type]
 			var uvs = chunk_uvs[mesh_type]
@@ -169,18 +169,18 @@ func _mesh() -> void:
 		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		var mesh_instance = MeshInstance3D.new()
 		mesh_instance.mesh = array_mesh
-		mesh_instance.material_override = _world.opaque_material
-		if mesh_type == MeshType.TRANSPARENT:
-			mesh_instance.material_override = _world.transparent_material
+		mesh_instance.material_override = _world.default_material
+		if mesh_type == MeshType.WATER:
+			mesh_instance.material_override = _world.water_material
 		add_child.call_deferred(mesh_instance)
-	var opaque_vertices = chunk_vertices[MeshType.OPAQUE]
-	if opaque_vertices.size() > 0:
+	var default_vertices = chunk_vertices[MeshType.DEFAULT]
+	if default_vertices.size() > 0:
 		var collision_shape = CollisionShape3D.new()
 		var concave_shape = ConcavePolygonShape3D.new()
 		var faces = PackedVector3Array()
-		for i in range(0, opaque_vertices.size(), 4):
+		for i in range(0, default_vertices.size(), 4):
 			for j in block_indices:
-				faces.append(opaque_vertices[i + j])
+				faces.append(default_vertices[i + j])
 		concave_shape.set_faces(faces)
 		collision_shape.shape = concave_shape
 		add_child.call_deferred(collision_shape)
