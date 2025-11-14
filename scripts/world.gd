@@ -32,7 +32,7 @@ func _ready() -> void:
 	water_material.render_priority = 1
 
 func _notification(what: int) -> void:
-	if what != NOTIFICATION_WM_CLOSE_REQUEST:
+	if what != NOTIFICATION_WM_CLOSE_REQUEST and what != NOTIFICATION_PREDELETE:
 		return
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
 	for task_id in _task_ids:

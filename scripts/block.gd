@@ -37,7 +37,7 @@ static func get_normal(face: Face) -> Vector3i:
 			return Vector3i.UP
 		Face.DOWN:
 			return Vector3i.DOWN
-	return Vector3i.FORWARD
+	return Vector3i.ZERO
 
 static func get_vertices(face: Face) -> Array[Vector3]:
 	match face:
@@ -53,8 +53,7 @@ static func get_vertices(face: Face) -> Array[Vector3]:
 			return [Vector3(0, 1, 0), Vector3(1, 1, 0), Vector3(1, 1, 1), Vector3(0, 1, 1)]
 		Face.DOWN:
 			return [Vector3(0, 0, 1), Vector3(1, 0, 1), Vector3(1, 0, 0), Vector3(0, 0, 0)]
-
-	return [Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0)]
+	return []
 
 static func get_face_index(type: Type, face: Face) -> Vector2:
 	match type:
@@ -98,13 +97,10 @@ static func get_texcoords(face: Face) -> Array[Vector2]:
 			return [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
 		Face.DOWN:
 			return [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
-	return [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+	return []
 
 static func is_transparent(type: Type) -> bool:
-	match type:
-		Type.WATER:
-			return true
-	return false
+	return type == Type.WATER
 
 static func get_indices() -> Array[int]:
 	return [0, 1, 2, 0, 2, 3]

@@ -191,7 +191,7 @@ func _mesh() -> void:
 	assert(not has_flag(Flag.UNLOADING))
 
 func _remove_id():
-	if _task_id:
+	if _task_id and _world:
 		_world.remove_task_id(_task_id)
 		_task_id = 0
 
