@@ -1,7 +1,7 @@
 extends Node3D
 
-const _WIDTH = 20 # +1
-const _HEIGHT = 10 # +1
+const _WIDTH = 30 # +1
+const _HEIGHT = 1 # +1
 const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
 
 @export var generator_type = Generator.Type.EMPTY
@@ -18,6 +18,8 @@ var water_material: ShaderMaterial = null
 var _task_ids: Dictionary[int, bool] = {}
 
 func _ready() -> void:
+	@warning_ignore("assert_always_true")
+	assert(_SIZE.y == 1)
 	generator = Generator.new(generator_type)
 	var spritesheet = Spritesheet.get_spritesheet()
 	default_material = ShaderMaterial.new()
@@ -30,8 +32,6 @@ func _ready() -> void:
 	water_material.render_priority = 1
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE:
-		assert(_task_ids.is_empty())
 	if what != NOTIFICATION_WM_CLOSE_REQUEST:
 		return
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)

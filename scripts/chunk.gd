@@ -19,7 +19,7 @@ enum MeshType {
 }
 
 const WIDTH = 10
-const HEIGHT = 10
+const HEIGHT = 40
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
 
 var _blocks: Dictionary[Vector3i, Block.Type] = {}

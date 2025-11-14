@@ -2,7 +2,6 @@ shader_type spatial;
 
 render_mode cull_disabled;
 render_mode depth_draw_opaque;
-render_mode specular_toon;
 
 uniform sampler2DArray spritesheet : filter_nearest_mipmap, repeat_disable;
 
@@ -25,5 +24,5 @@ void fragment() {
 	ALBEDO = tex_color;
 	METALLIC = 1.0;
 	ROUGHNESS = 0.0;
-	SPECULAR = 1.0;
+	SPECULAR = 0.5;
 }

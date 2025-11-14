@@ -15,7 +15,6 @@ signal switch_block(type: Block.Type)
 signal set_block(index: Vector3i, type: Block.Type)
 
 func _ready() -> void:
-	position.y = 30
 	_switch_block(0)
 	_collision_shape.disabled = true
 
