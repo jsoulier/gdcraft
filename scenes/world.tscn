@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://dosvcntvvmsbg"]
+
+[ext_resource type="Script" uid="uid://dlsmcj6x7owv3" path="res://scripts/world.gd" id="1_nnsk1"]
+[ext_resource type="PackedScene" uid="uid://cb7wm23xxaibd" path="res://scenes/player.tscn" id="2_rwgxs"]
+
+[sub_resource type="Environment" id="Environment_4wyf3"]
+ssao_enabled = true
+ssao_radius = 1.05
+ssao_light_affect = 1.0
+ssao_ao_channel_affect = 0.8
+ssil_enabled = true
+
+[node name="World" type="Node"]
+script = ExtResource("1_nnsk1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_4wyf3")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_rwgxs")]

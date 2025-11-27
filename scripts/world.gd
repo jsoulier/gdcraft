@@ -1,142 +1,120 @@
-extends Node3D
+class_name World extends Node
 
-const _WIDTH = 30 # +1
-const _HEIGHT = 1 # +1
-const _SIZE = Vector3i(_WIDTH, _HEIGHT, _WIDTH)
+@export var load_radius = 10
+@export var unload_radius = 12
+@export var max_workers = 12
 
-@export var generator_type = Generator.Type.EMPTY
-@onready var _player = $Player
-var _default_shader = preload("res://resources/default.gdshader")
-var _water_shader = preload("res://resources/water.gdshader")
+@onready var _player: Player = $Player
+@onready var _sun: DirectionalLight3D = $Sun
+var resources = Resources.new()
+var generator = Generator.new()
 var _chunks: Dictionary[Vector3i, Chunk] = {}
-var _player_chunk_index: Vector3i = Vector3i.MAX
-var _generated: bool = false
-var _meshed: bool = false
-var generator: Generator = null
-var default_material: ShaderMaterial = null
-var water_material: ShaderMaterial = null
-var _task_ids: Dictionary[int, bool] = {}
+var _sorted_chunks: Array[Vector3i] = []
+var _borderless_sorted_chunks: Array[Vector3i] = []
+var _player_chunk_index: Vector3i
+var task_ids: Dictionary[int, bool] = {} # TODO: add add_task_id/remove and add asserts that we're less than max_workers
 
-func _ready() -> void:
-	@warning_ignore("assert_always_true")
-	assert(_SIZE.y == 1)
-	generator = Generator.new(generator_type)
-	var spritesheet = Spritesheet.get_spritesheet()
-	default_material = ShaderMaterial.new()
-	default_material.shader = _default_shader
-	default_material.set_shader_parameter("spritesheet", spritesheet)
-	default_material.render_priority = 0
-	water_material = ShaderMaterial.new()
-	water_material.shader = _water_shader
-	water_material.set_shader_parameter("spritesheet", spritesheet)
-	water_material.render_priority = 1
+func _init() -> void:
+	for x in range(-load_radius, load_radius + 1):
+		for y in range(-load_radius, load_radius + 1):
+			_sorted_chunks.append(Vector3i(x, 0, y))
+	var borderless_radius = load_radius - 1
+	for x in range(-borderless_radius, borderless_radius + 1):
+		for y in range(-borderless_radius, borderless_radius + 1):
+			_borderless_sorted_chunks.append(Vector3i(x, 0, y))
+	var center = Vector3i(0, 0, 0)
+	_sorted_chunks.sort_custom(
+		func(a: Vector3i, b: Vector3i):
+			assert(a.y == 0 and b.y == 0)
+			return a.distance_to(center) < b.distance_to(center))
+	_borderless_sorted_chunks.sort_custom(
+		func(a: Vector3i, b: Vector3i):
+			assert(a.y == 0 and b.y == 0)
+			return a.distance_to(center) < b.distance_to(center))
 
 func _notification(what: int) -> void:
-	if what != NOTIFICATION_WM_CLOSE_REQUEST and what != NOTIFICATION_PREDELETE:
-		return
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MINIMIZED)
-	for task_id in _task_ids:
-		WorkerThreadPool.wait_for_task_completion(task_id)
+	if what == NOTIFICATION_PREDELETE:
+		for task_id in task_ids:
+			WorkerThreadPool.wait_for_task_completion(task_id)
+	
+func _ready() -> void:
+	generator.type = Generator.Type.SUPERFLAT
 
-func get_chunk(index: Vector3i) -> Chunk:
-	return _chunks.get(index, null)
+func _preserve(index: Vector3i) -> bool:
+	index -= _player_chunk_index
+	return \
+		index.x >= -unload_radius and index.x <= unload_radius and \
+		index.z >= -unload_radius and index.z <= unload_radius
 
-func add_task_id(task_id: int) -> void:
-	_task_ids[task_id] = false
+func _generate() -> int:
+	var working = 0
+	for index_2d in _sorted_chunks:
+		if working >= max_workers:
+			return working
+		var index = _player_chunk_index + index_2d
+		var chunk = _chunks.get(index, null)
+		if not chunk:
+			chunk = Chunk.new(self, index)
+			# Chunk always needs to be added to ensure it's freed BEFORE the world (for threading reasons)
+			add_child(chunk)
+			_chunks[index] = chunk
+		if chunk.has_flag(Chunk.Flag.GENERATING):
+			working += 1
+		elif not chunk.has_flag(Chunk.Flag.GENERATED):
+			assert(not chunk.has_flag(Chunk.Flag.MESHING))
+			assert(not chunk.has_flag(Chunk.Flag.MESHED))
+			chunk.generate_async()
+			working += 1
+	return working
 
-func remove_task_id(task_id: int) -> void:
-	_task_ids.erase(task_id)
+func _mesh(working: int) -> int:
+	for index_2d in _borderless_sorted_chunks:
+		if working >= max_workers:
+			return working
+		var index = _player_chunk_index + index_2d
+		var chunk = _chunks.get(index, null)
+		assert(chunk)
+		assert(not chunk.has_flag(Chunk.Flag.GENERATING))
+		assert(chunk.has_flag(Chunk.Flag.GENERATED))
+		if chunk.has_flag(Chunk.Flag.MESHING):
+			working += 1
+			continue
+		elif not chunk.has_flag(Chunk.Flag.MESHED):
+			chunk.mesh_async()
+			working += 1
+	return working
 
-func _process(_delta: float) -> void:
-	var chunk_index = Vector3i(_player.position) / Chunk.SIZE
-	chunk_index.y = 0
-	if _player_chunk_index == chunk_index and _generated and _meshed:
-		return
-	_player_chunk_index = chunk_index
-	@warning_ignore("integer_division")
-	var size = _SIZE / 2
-	var borderless_size = size - Vector3i(1, 1, 1)
-	assert(borderless_size.x >= 0)
-	assert(borderless_size.z >= 0)
-	_generated = true
-	for x in range(-size.x, size.x + 1):
-		for z in range(-size.z, size.z + 1):
-			for y in range(0, _HEIGHT):
-				var index = _player_chunk_index + Vector3i(x, y, z)
-				var chunk = _chunks.get(index, null)
-				if not chunk:
-					chunk = Chunk.new(self, index)
-					_chunks[index] = chunk
-				if not chunk.has_flag(Chunk.Flag.GENERATED):
-					assert(not chunk.has_flag(Chunk.Flag.MESHING))
-					assert(not chunk.has_flag(Chunk.Flag.MESHED))
-					_generated = false
-					if not chunk.has_flag(Chunk.Flag.GENERATING):
-						chunk.generate()
-				chunk.clear_flag(Chunk.Flag.UNLOAD)
-	if _generated:
-		_meshed = true
-		for x in range(-borderless_size.x, borderless_size.x + 1):
-			for z in range(-borderless_size.z, borderless_size.z + 1):
-				for y in range(0, _HEIGHT):
-					var index = _player_chunk_index + Vector3i(x, y, z)
-					var chunk = _chunks.get(index, null)
-					assert(chunk)
-					assert(not chunk.has_flag(Chunk.Flag.GENERATING))
-					assert(chunk.has_flag(Chunk.Flag.GENERATED))
-					if not chunk.has_flag(Chunk.Flag.MESHED):
-						_meshed = false
-						if not chunk.has_flag(Chunk.Flag.MESHING):
-							chunk.mesh()
+func _unload() -> void:
 	for index in _chunks.keys():
 		var chunk = _chunks[index]
-		if not chunk.has_flag(Chunk.Flag.UNLOAD):
-			chunk.set_flag(Chunk.Flag.UNLOAD)
-			continue
 		if chunk.has_flag(Chunk.Flag.WORKING):
 			continue
-		assert(chunk._task_id == 0)
+		if _preserve(index):
+			continue
 		var free = true
-		for i in range(Block.Face.COUNT):
-			var block_normal = Block.get_normal(i as Block.Face)
+		for face in range(Block.Face.COUNT):
+			if face == Block.Face.UP or face == Block.Face.DOWN:
+				continue
+			var block_normal = Block.get_normal(Block.Type.EMPTY, face)
 			var neighbor_chunk_index = index + block_normal
 			var neighbor_chunk = get_chunk(neighbor_chunk_index)
-			if neighbor_chunk:
-				if neighbor_chunk.has_flag(Chunk.Flag.MESHING):
-					free = false
-					break
+			if not neighbor_chunk:
+				continue
+			if neighbor_chunk.has_flag(Chunk.Flag.MESHING):
+				free = false
+				break
 		if free:
-			chunk.set_flag(Chunk.Flag.UNLOADING)
 			chunk.queue_free()
 			_chunks.erase(index)
 
-func _remesh(index: Vector3i) -> void:
-	var chunk = get_chunk(index)
-	if not chunk:
-		return
-	if chunk.has_flag(Chunk.Flag.WORKING):
-		return
-	chunk.remesh()
+func _process(_delta: float) -> void:
+	_player_chunk_index = Vector3i(_player.position) / Chunk.WIDTH
+	_player_chunk_index.y = 0
+	var workers = _generate()
+	if not workers:
+		_mesh(workers)
+	_unload()
 
-func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
-	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())
-	var block_index = index - chunk_index * Chunk.SIZE
-	var chunk = get_chunk(chunk_index)
-	if not chunk:
-		return
-	if chunk.has_flag(Chunk.Flag.WORKING):
-		return
-	chunk.set_block(block_index, type)
-	_meshed = false
-	if block_index.x == 0:
-		_remesh(chunk_index - Vector3i(1, 0, 0))
-	elif block_index.x == Chunk.SIZE.x - 1:
-		_remesh(chunk_index + Vector3i(1, 0, 0))
-	if block_index.y == 0:
-		_remesh(chunk_index - Vector3i(0, 1, 0))
-	elif block_index.y == Chunk.SIZE.y - 1:
-		_remesh(chunk_index + Vector3i(0, 1, 0))
-	if block_index.z == 0:
-		_remesh(chunk_index - Vector3i(0, 0, 1))
-	elif block_index.z == Chunk.SIZE.z - 1:
-		_remesh(chunk_index + Vector3i(0, 0, 1))
+func get_chunk(index: Vector3i) -> Chunk:
+	assert(index.y == 0)
+	return _chunks.get(index, null)

@@ -1,3 +1,1 @@
 # GDCraft
-
-![](image.png)
