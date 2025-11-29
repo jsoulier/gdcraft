@@ -3,11 +3,10 @@ extends Node
 
 const LOAD_RADIUS = 10
 const UNLOAD_RADIUS = 12
-const MAX_WORKERS = 12
 
 @onready var _player: Player = $Player
-var resources = Resources.new()
 var generator = Generator.new()
+var max_workers = OS.get_processor_count()
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _generate_chunks: Array[Vector3i] = []
 var _mesh_chunks: Array[Vector3i] = []
@@ -31,19 +30,19 @@ func _notification(what: int) -> void:
 
 func _in_bounds(index: Vector3i) -> bool:
 	index -= _player_chunk_index
-	return index.x >= -UNLOAD_RADIUS and index.x <= UNLOAD_RADIUS and \
-		index.z >= -UNLOAD_RADIUS and index.z <= UNLOAD_RADIUS
+	return index.x >= -UNLOAD_RADIUS and index.x <= UNLOAD_RADIUS \
+		and index.z >= -UNLOAD_RADIUS and index.z <= UNLOAD_RADIUS
 	
 func _ready() -> void:
-	generator.type = Generator.Type.SUPERFLAT
-	generator.seed_number = 1337
+	generator.type = Generator.Type.NOISE
+	generator.generator_seed = 1337
 
 func _sort(a: Vector3i, b: Vector3i) -> bool:
 	assert(a.y == 0 and b.y == 0)
 	return a.length() < b.length()
 
 func add_task_id(task_id: int) -> void:
-	assert(_task_ids.size() < MAX_WORKERS)
+	assert(_task_ids.size() < max_workers)
 	_task_ids[task_id] = false
 
 func remove_task_id(task_id: int) -> void:
@@ -56,7 +55,7 @@ func get_chunk(index: Vector3i) -> Chunk:
 
 func _generate() -> void:
 	for index in _generate_chunks:
-		if _task_ids.size() >= MAX_WORKERS:
+		if _task_ids.size() >= max_workers:
 			return
 		index += _player_chunk_index
 		var chunk = _chunks.get(index, null)
@@ -73,7 +72,7 @@ func _generate() -> void:
 
 func _mesh():
 	for index in _mesh_chunks:
-		if _task_ids.size() >= MAX_WORKERS:
+		if _task_ids.size() >= max_workers:
 			return
 		index += _player_chunk_index
 		var chunk = _chunks.get(index, null)
@@ -104,9 +103,11 @@ func _unload() -> void:
 			if neighbor_chunk.has_flag(Chunk.Flag.MESHING):
 				free = false
 				break
-		if free:
-			chunk.queue_free()
-			_chunks.erase(index)
+		if not free:
+			continue
+		_chunks.erase(index)
+		remove_child(chunk)
+		WorkerThreadPool.add_task(func(): chunk.free())
 
 func _process(_delta: float) -> void:
 	_player_chunk_index = Vector3i(_player.position) / Chunk.WIDTH
@@ -116,3 +117,6 @@ func _process(_delta: float) -> void:
 	if _workers == _task_ids.size():
 		_mesh()
 	_unload()
+
+func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
+	pass

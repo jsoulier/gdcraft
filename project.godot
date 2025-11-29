@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="gdcraft"
-run/main_scene="uid://6dp6buv7r750"
+run/main_scene="uid://dosvcntvvmsbg"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
-[debug]
+[autoload]
 
-settings/stdout/print_fps=true
+GDCraftResources="*res://scripts/resources.gd"
 
 [display]
 

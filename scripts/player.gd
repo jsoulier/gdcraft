@@ -1,10 +1,18 @@
 class_name Player
 extends CharacterBody3D
 
+signal switch_block(type: Block.Type)
+signal set_block(index: Vector3i, type: Block.Type)
+
 @export var walk_speed = 5.0
 @export var sprint_speed = 250.0
 @export var rotate_speed = 0.001
 @onready var _head = $Head
+@onready var _raycast = $Head/RayCast3D
+@onready var _raycast_block = $RayCastBlock
+var _raycast_break_position: Vector3i
+var _raycast_place_position: Vector3i
+var _block_type = Block.Type.GRASS
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:

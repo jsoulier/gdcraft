@@ -7,13 +7,13 @@ const HEIGHT = 256
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
 
 enum Flag {
-	NONE = 0,
+	NONE       = 0,
 	GENERATING = 0b00000001,
 	GENERATED  = 0b00000010,
 	EXPOSED    = 0b00000100,
 	MESHING    = 0b00001000,
 	MESHED     = 0b00010000,
-	WORKING = GENERATING | MESHING,
+	WORKING    = GENERATING | MESHING,
 }
 
 enum MeshType {
@@ -103,16 +103,16 @@ func _mesh() -> void:
 		var block = _exposed_blocks.get(index)
 		assert(block != Block.Type.EMPTY)
 		for face in range(Face.Type.COUNT):
-			if _skip(index, face):
+			if _skip_face(index, face):
 				continue
 			var vector = Face.get_vector(face)
 			var neighbor_block = _get_block(index, vector)
 			if not Block.is_exposed(block, neighbor_block):
 				continue
 			if not Block.is_transparent(block):
-				_add_face(_meshes[MeshType.OPAQUE], index, block, face)
+				_emit_face(_meshes[MeshType.OPAQUE], index, block, face)
 			else:
-				_add_face(_meshes[MeshType.TRANSPARENT], index, block, face)
+				_emit_face(_meshes[MeshType.TRANSPARENT], index, block, face)
 	for type in range(MeshType.COUNT):
 		var mesh_instance = _create_mesh_instance(_meshes[type], type)
 		if mesh_instance:
@@ -144,7 +144,7 @@ func _expose() -> void:
 		var block = _all_blocks.get(index)
 		assert(block != Block.Type.EMPTY)
 		for face in range(Face.Type.COUNT):
-			if _skip(index, face):
+			if _skip_face(index, face):
 				continue
 			var vector = Face.get_vector(face)
 			var neighbor_block = _get_block(index, vector)
@@ -153,7 +153,7 @@ func _expose() -> void:
 				break
 	set_flag(Flag.EXPOSED)
 
-func _add_face(arrays: Array, index: Vector3i, type: Block.Type, face: Face.Type) -> void:
+func _emit_face(arrays: Array, index: Vector3i, type: Block.Type, face: Face.Type) -> void:
 	var start_index = arrays[Mesh.ARRAY_VERTEX].size()
 	var location = Vector3(_index * SIZE + index)
 	for i in range(4):
@@ -163,6 +163,9 @@ func _add_face(arrays: Array, index: Vector3i, type: Block.Type, face: Face.Type
 		arrays[Mesh.ARRAY_TEX_UV2].append(Block.get_texcoord2(type, face, i))
 	for i in Block.get_indices():
 		arrays[Mesh.ARRAY_INDEX].append(start_index + i)
+
+func _skip_face(index: Vector3i, face: Face.Type):
+	return index.y == 0 and _index.y == 0 and face == Face.Type.DOWN
 
 func _create_mesh_arrays() -> Array:
 	var arrays = []
@@ -183,9 +186,9 @@ func _create_mesh_instance(arrays: Array, type: MeshType) -> MeshInstance3D:
 	mesh_instance.mesh = array_mesh
 	match type:
 		MeshType.OPAQUE:
-			mesh_instance.material_override = _world.resources.opaque_shader_material
+			mesh_instance.material_override = GDCraftResources.opaque_material
 		MeshType.TRANSPARENT:
-			mesh_instance.material_override = _world.resources.transparent_shader_material
+			mesh_instance.material_override = GDCraftResources.transparent_material
 	return mesh_instance
 
 func _create_collision_shape(arrays: Array) -> CollisionShape3D:
@@ -198,6 +201,3 @@ func _create_collision_shape(arrays: Array) -> CollisionShape3D:
 	var collision_shape = CollisionShape3D.new()
 	collision_shape.shape = concave_polygon_shape
 	return collision_shape
-
-func _skip(index: Vector3i, face: Face.Type):
-	return index.y == 0 and _index.y == 0 and face == Face.Type.DOWN

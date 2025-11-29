@@ -1,23 +1,24 @@
 class_name Resources
+extends Node
 
 const SPRITE_SIZE = 16
 const SPRITESHEET = preload("res://resources/spritesheet.png")
 const OPAQUE_SHADER = preload("res://resources/opaque.gdshader")
 const TRANSPARENT_SHADER = preload("res://resources/transparent.gdshader")
 
-var opaque_shader_material: ShaderMaterial = null
-var transparent_shader_material: ShaderMaterial = null
+var opaque_material: ShaderMaterial = null
+var transparent_material: ShaderMaterial = null
 
-func _init() -> void:
+func _ready() -> void:
 	var spritesheet = _create_spritesheet()
-	opaque_shader_material = ShaderMaterial.new()
-	opaque_shader_material.shader = OPAQUE_SHADER
-	opaque_shader_material.set_shader_parameter("spritesheet", spritesheet)
-	opaque_shader_material.render_priority = 0
-	transparent_shader_material = ShaderMaterial.new()
-	transparent_shader_material.shader = TRANSPARENT_SHADER
-	transparent_shader_material.set_shader_parameter("spritesheet", spritesheet)
-	transparent_shader_material.render_priority = 0
+	opaque_material = ShaderMaterial.new()
+	opaque_material.shader = OPAQUE_SHADER
+	opaque_material.set_shader_parameter("spritesheet", spritesheet)
+	opaque_material.render_priority = 0
+	transparent_material = ShaderMaterial.new()
+	transparent_material.shader = TRANSPARENT_SHADER
+	transparent_material.set_shader_parameter("spritesheet", spritesheet)
+	transparent_material.render_priority = 0
 
 func _create_spritesheet() -> Texture2DArray:
 	var image = SPRITESHEET.get_image()

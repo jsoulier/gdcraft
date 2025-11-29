@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://6dp6buv7r750"]
+[gd_scene load_steps=2 format=3 uid="uid://dssrxsmjsw5bg"]
 
-[ext_resource type="Script" uid="uid://dm7mc0ilwhh21" path="res://scripts/main.gd" id="1_o5qli"]
+[sub_resource type="GDScript" id="GDScript_sgp6g"]
+script/source = "class_name Main
+extends Node
+
+const WORLD = preload(\"res://scenes/world.tscn\")
+
+func _ready() -> void:
+	add_child(WORLD.instantiate())
+"
 
 [node name="Main" type="Node"]
-script = ExtResource("1_o5qli")
+script = SubResource("GDScript_sgp6g")
