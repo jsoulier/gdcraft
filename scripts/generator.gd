@@ -1,4 +1,4 @@
-class_name Generator extends Node
+class_name Generator
 
 enum Type {
 	NOISE,
@@ -7,7 +7,7 @@ enum Type {
 }
 
 var type = Type.NOISE
-var seed = 1337
+var seed_number = 1337
 
 func _noise(_index: Vector3i, _blocks: Dictionary[Vector3i, Block.Type]) -> void:
 	pass

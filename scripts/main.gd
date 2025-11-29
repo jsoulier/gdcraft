@@ -1,4 +1,5 @@
-class_name Main extends Node
+class_name Main
+extends Node
 
 const WORLD = preload("res://scenes/world.tscn")
 

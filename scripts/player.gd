@@ -1,11 +1,10 @@
-class_name Player extends CharacterBody3D
+class_name Player
+extends CharacterBody3D
 
 @export var walk_speed = 5.0
-@export var sprint_speed = 50.0
+@export var sprint_speed = 250.0
 @export var rotate_speed = 0.001
 @onready var _head = $Head
-@onready var _camera = $Head/Camera3D
-@onready var _raycast = $Head/RayCast3D
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
