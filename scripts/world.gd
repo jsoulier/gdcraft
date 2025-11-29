@@ -14,10 +14,10 @@ var _player_chunk_index = Vector3i.ZERO
 var _task_ids: Dictionary[int, bool] = {}
 
 func _init() -> void:
+	var mesh_radius = LOAD_RADIUS - 1
 	for x in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
 		for y in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
 			_generate_chunks.append(Vector3i(x, 0, y))
-	var mesh_radius = LOAD_RADIUS - 1
 	for x in range(-mesh_radius, mesh_radius + 1):
 		for y in range(-mesh_radius, mesh_radius + 1):
 			_mesh_chunks.append(Vector3i(x, 0, y))
@@ -118,6 +118,14 @@ func _process(_delta: float) -> void:
 		_mesh()
 	_unload()
 
+func _remesh(index: Vector3i) -> void:
+	var chunk = get_chunk(index)
+	if not chunk:
+		return
+	if chunk.has_flag(Chunk.Flag.WORKING) or not chunk.has_flag(Chunk.Flag.MESHED):
+		return
+	chunk.mesh(false, true)
+
 func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
 	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())
 	var block_index = index - chunk_index * Chunk.SIZE
@@ -126,6 +134,21 @@ func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
 		return
 	if chunk.has_flag(Chunk.Flag.WORKING) or not chunk.has_flag(Chunk.Flag.MESHED):
 		return
+	for face in range(Face.Type.COUNT):
+		if face == Face.Type.UP or face == Face.Type.DOWN:
+			continue
+		var vector = Face.get_vector(face)
+		var neighbor_chunk_index = chunk_index + vector
+		var neighbor_chunk = get_chunk(neighbor_chunk_index)
+		if not neighbor_chunk.has_flag(Chunk.Flag.GENERATED):
+			return
 	chunk.set_block(block_index, type)
-	# TODO: check if neighbors are generated 
 	chunk.mesh(false)
+	if block_index.x == 0:
+		_remesh(chunk_index - Vector3i(1, 0, 0))
+	elif block_index.x == Chunk.SIZE.x - 1:
+		_remesh(chunk_index + Vector3i(1, 0, 0))
+	if block_index.z == 0:
+		_remesh(chunk_index - Vector3i(0, 0, 1))
+	elif block_index.z == Chunk.SIZE.z - 1:
+		_remesh(chunk_index + Vector3i(0, 0, 1))

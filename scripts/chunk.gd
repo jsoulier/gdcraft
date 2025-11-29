@@ -68,7 +68,22 @@ func _get_block(index: Vector3i, face: Vector3i) -> Block.Type:
 	assert(neighbor_chunk.has_flag(Flag.GENERATED))
 	var neighbor_index = _get_local_position(index)
 	return neighbor_chunk.get_block(neighbor_index)
-	
+
+func _expose_neighbor(index: Vector3i, face: Vector3i) -> void:
+	assert(in_bounds(index))
+	index += face
+	assert(not in_bounds(index))
+	if face.y != 0:
+		return
+	var neighbor_chunk_index = _index + face
+	var neighbor_chunk = _world.get_chunk(neighbor_chunk_index)
+	assert(not neighbor_chunk.has_flag(Flag.WORKING))
+	assert(neighbor_chunk.has_flag(Flag.GENERATED))
+	var neighbor_index = _get_local_position(index)
+	if neighbor_chunk.get_block(neighbor_index) != Block.Type.EMPTY:
+		# TODO: not accurate
+		neighbor_chunk._exposed_blocks[neighbor_index] = false
+
 func _exposed(index: Vector3i) -> bool:
 	assert(in_bounds(index))
 	var block = _all_blocks.get(index, Block.Type.EMPTY)
@@ -102,6 +117,7 @@ func set_block(index: Vector3i, type: Block.Type) -> void:
 		var vector = Face.get_vector(face)
 		var neighbor_index = index + vector
 		if not in_bounds(neighbor_index):
+			_expose_neighbor(index, vector)
 			continue
 		_exposed_blocks.erase(neighbor_index)
 		if _exposed(neighbor_index):
@@ -116,10 +132,12 @@ func generate() -> void:
 	var task_id = WorkerThreadPool.add_task(_generate, HIGH_PRIORITY)
 	_world.add_task_id(task_id)
 
-func mesh(async: bool) -> void:
+func mesh(async: bool, force = false) -> void:
 	assert(has_flag(Flag.GENERATED))
-	assert(!has_flag(Flag.MESHED))
 	assert(!has_flag(Flag.WORKING))
+	if force and has_flag(Flag.MESHED):
+		clear_flag(Flag.MESHED)
+	assert(!has_flag(Flag.MESHED))
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -141,7 +159,7 @@ func _mesh() -> void:
 	for type in range(MeshType.COUNT):
 		_meshes.append(_create_mesh_arrays())
 	for index in _exposed_blocks:
-		var block = _all_blocks.get(index)
+		var block = _all_blocks.get(index, Block.Type.EMPTY)
 		assert(block != Block.Type.EMPTY)
 		for face in range(Face.Type.COUNT):
 			if _skip_face(index, face):
