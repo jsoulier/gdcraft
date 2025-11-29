@@ -27,6 +27,11 @@ func _input(event: InputEvent) -> void:
 			_head.rotate_x(-event.relative.y * rotate_speed)
 	if event is InputEventMouseButton:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		if _raycast.is_colliding():
+			if event.is_action_pressed(&"place"):
+				set_block.emit(_raycast_place_position, _block_type)
+			elif event.is_action_pressed(&"break"):
+				set_block.emit(_raycast_break_position, Block.Type.EMPTY)
 	elif event.is_action_pressed(&"unfocus"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -53,3 +58,12 @@ func _physics_process(_delta) -> void:
 	direction = (direction + up).normalized()
 	velocity = direction * speed
 	move_and_slide()
+	_raycast_block.visible = _raycast.is_colliding()
+	if not _raycast.is_colliding():
+		return
+	var ray_position = _raycast.get_collision_point()
+	var ray_normal = _raycast.get_collision_normal()
+	var block_position = Vector3i((ray_position - ray_normal / 2).floor())
+	_raycast_block.global_position = Vector3(block_position) + Vector3(0.5, 0.5, 0.5) 
+	_raycast_break_position = block_position
+	_raycast_place_position = Vector3i((ray_position + ray_normal / 2).floor())

@@ -119,4 +119,13 @@ func _process(_delta: float) -> void:
 	_unload()
 
 func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
-	pass
+	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())
+	var block_index = index - chunk_index * Chunk.SIZE
+	var chunk = get_chunk(chunk_index)
+	if not chunk:
+		return
+	if chunk.has_flag(Chunk.Flag.WORKING) or not chunk.has_flag(Chunk.Flag.MESHED):
+		return
+	chunk.set_block(block_index, type)
+	# TODO: check if neighbors are generated 
+	chunk.mesh(false)

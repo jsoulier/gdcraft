@@ -2,8 +2,8 @@ class_name Chunk
 extends StaticBody3D
 
 const HIGH_PRIORITY = false
-const WIDTH = 32
-const HEIGHT = 256
+const WIDTH = 10
+const HEIGHT = 128
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
 
 enum Flag {
@@ -26,7 +26,7 @@ var _world = null
 var _index: Vector3i
 var _flags = Flag.NONE
 var _all_blocks: Dictionary[Vector3i, Block.Type] = {}
-var _exposed_blocks: Dictionary[Vector3i, Block.Type] = {}
+var _exposed_blocks: Dictionary[Vector3i, bool] = {}
 
 func _init(world, index: Vector3i) -> void:
 	_world = world
@@ -60,12 +60,53 @@ func _get_block(index: Vector3i, face: Vector3i) -> Block.Type:
 	index += face 
 	if in_bounds(index):
 		return get_block(index)
-	assert(face.y == 0)
+	assert(face.y != -1)
+	if face.y == 1:
+		return Block.Type.EMPTY
 	var neighbor_chunk_index = _index + face
 	var neighbor_chunk = _world.get_chunk(neighbor_chunk_index)
 	assert(neighbor_chunk.has_flag(Flag.GENERATED))
 	var neighbor_index = _get_local_position(index)
 	return neighbor_chunk.get_block(neighbor_index)
+	
+func _exposed(index: Vector3i) -> bool:
+	assert(in_bounds(index))
+	var block = _all_blocks.get(index, Block.Type.EMPTY)
+	if block == Block.Type.EMPTY:
+		return false
+	for face in range(Face.Type.COUNT):
+		if _skip_face(index, face):
+			continue
+		var vector = Face.get_vector(face)
+		var neighbor_block = _get_block(index, vector)
+		if Block.is_exposed(block, neighbor_block):
+			_exposed_blocks[index] = false
+			return true
+	return false
+
+func set_block(index: Vector3i, type: Block.Type) -> void:
+	assert(has_flag(Flag.GENERATED))
+	assert(has_flag(Flag.EXPOSED))
+	assert(has_flag(Flag.MESHED))
+	assert(not has_flag(Flag.WORKING))
+	assert(in_bounds(index))
+	if type == Block.Type.EMPTY:
+		_all_blocks.erase(index)
+	else:
+		_all_blocks[index] = type
+	if _exposed(index):
+		_exposed_blocks[index] = false
+	else:
+		_exposed_blocks.erase(index)
+	for face in range(Face.Type.COUNT):
+		var vector = Face.get_vector(face)
+		var neighbor_index = index + vector
+		if not in_bounds(neighbor_index):
+			continue
+		_exposed_blocks.erase(neighbor_index)
+		if _exposed(neighbor_index):
+			_exposed_blocks[neighbor_index] = false
+	clear_flag(Chunk.Flag.MESHED)
 
 func generate() -> void:
 	assert(!has_flag(Flag.GENERATED))
@@ -100,7 +141,7 @@ func _mesh() -> void:
 	for type in range(MeshType.COUNT):
 		_meshes.append(_create_mesh_arrays())
 	for index in _exposed_blocks:
-		var block = _exposed_blocks.get(index)
+		var block = _all_blocks.get(index)
 		assert(block != Block.Type.EMPTY)
 		for face in range(Face.Type.COUNT):
 			if _skip_face(index, face):
@@ -126,6 +167,7 @@ func _end_generate(task_id: int) -> void:
 	set_flag(Flag.GENERATED)
 	assert(not has_flag(Flag.MESHING))
 	assert(not has_flag(Flag.MESHED))
+	assert(task_id > 0)
 	_world.remove_task_id(task_id)
 
 func _end_mesh(task_id: int) -> void:
@@ -133,7 +175,8 @@ func _end_mesh(task_id: int) -> void:
 	assert(has_flag(Flag.GENERATED))
 	clear_flag(Flag.MESHING)
 	set_flag(Flag.MESHED)
-	_world.remove_task_id(task_id)
+	if task_id > 0:
+		_world.remove_task_id(task_id)
 
 func _expose() -> void:
 	assert(has_flag(Flag.GENERATED))
@@ -143,14 +186,8 @@ func _expose() -> void:
 	for index in _all_blocks:
 		var block = _all_blocks.get(index)
 		assert(block != Block.Type.EMPTY)
-		for face in range(Face.Type.COUNT):
-			if _skip_face(index, face):
-				continue
-			var vector = Face.get_vector(face)
-			var neighbor_block = _get_block(index, vector)
-			if Block.is_exposed(block, neighbor_block):
-				_exposed_blocks[index] = block
-				break
+		if _exposed(index):
+			_exposed_blocks[index] = false
 	set_flag(Flag.EXPOSED)
 
 func _emit_face(arrays: Array, index: Vector3i, type: Block.Type, face: Face.Type) -> void:
