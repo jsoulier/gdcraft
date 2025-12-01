@@ -1,4 +1,3 @@
-class_name Resources
 extends Node
 
 const SPRITESHEET = preload("res://resources/spritesheet.png")

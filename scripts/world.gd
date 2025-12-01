@@ -3,17 +3,18 @@ extends Node
 
 @export var load_radius = 10
 @export var unload_radius = 12
-@onready var _player: Player = $Player
-@onready var generator: Generator = $Generator
-@onready var database: Database = $Database
-var max_workers = OS.get_processor_count()
+@export var player_id = 0
+@export var max_workers = 8
+@onready var _player = $Player
+@onready var generator = $Generator
+@onready var database = $Database
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _generate_chunks: Array[Vector3i] = []
 var _mesh_chunks: Array[Vector3i] = []
 var _player_chunk_index = Vector3i.ZERO
 var _task_ids: Dictionary[int, bool] = {}
-
-func _init() -> void:
+	
+func _ready() -> void:
 	var mesh_radius = load_radius - 1
 	for x in range(-load_radius, load_radius + 1):
 		for y in range(-load_radius, load_radius + 1):
@@ -22,20 +23,23 @@ func _init() -> void:
 		for y in range(-mesh_radius, mesh_radius + 1):
 			_mesh_chunks.append(Vector3i(x, 0, y))
 	_mesh_chunks.sort_custom(_sort)
+	database.load_player(_player, player_id)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		for task_id in _task_ids:
 			WorkerThreadPool.wait_for_task_completion(task_id)
+		database.save_player(_player, player_id)
 
 func _in_bounds(index: Vector3i) -> bool:
+	assert(index.y == 0)
 	index -= _player_chunk_index
 	return index.x >= -unload_radius and index.x <= unload_radius \
 		and index.z >= -unload_radius and index.z <= unload_radius
 
-func _sort(a: Vector3i, b: Vector3i) -> bool:
-	assert(a.y == 0 and b.y == 0)
-	return a.length() < b.length()
+func _sort(lhs: Vector3i, rhs: Vector3i) -> bool:
+	assert(lhs.y == 0 and rhs.y == 0)
+	return lhs.length() < rhs.length()
 
 func add_task_id(task_id: int) -> void:
 	assert(_task_ids.size() < max_workers)
@@ -121,6 +125,7 @@ func _remesh(index: Vector3i) -> void:
 	if chunk.has_flag(Chunk.Flag.WORKING) or not chunk.has_flag(Chunk.Flag.MESHED):
 		return
 	chunk.mesh(false, true)
+	assert(not chunk.has_flag(Chunk.Flag.MESHED))
 
 func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
 	var chunk_index = Vector3i((Vector3(index) / Vector3(Chunk.SIZE)).floor())

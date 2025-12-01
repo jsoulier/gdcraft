@@ -31,6 +31,25 @@ func _init() -> void:
 	"""
 	if not _database.query(blocks_index):
 		push_error("Failed to create blocks index")
+	var players_table = """
+		CREATE TABLE IF NOT EXISTS players (
+			id INTEGER PRIMARY KEY,
+			position_x INTEGER NOT NULL,
+			position_y INTEGER NOT NULL,
+			position_z INTEGER NOT NULL,
+			rotation_x INTEGER NOT NULL,
+			rotation_y INTEGER NOT NULL,
+			rotation_z INTEGER NOT NULL
+		);
+	"""
+	if not _database.query(players_table):
+		push_error("Failed to create players table")
+	var players_index = """
+		CREATE INDEX IF NOT EXISTS players_index
+		ON players (id);
+	"""
+	if not _database.query(players_index):
+		push_error("Failed to create players index")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
@@ -84,3 +103,54 @@ func get_blocks(chunk: Vector3i) -> Array:
 	var result = _database.query_result.duplicate(true)
 	_mutex.unlock()
 	return result
+
+func save_player(player: Player, id: int) -> void:
+	_mutex.lock()
+	if _database == null:
+		_mutex.unlock()
+		return
+	var sql = """
+		INSERT INTO players
+		(position_x, position_y, position_z, rotation_x, rotation_y, rotation_z, id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id)
+		DO UPDATE SET
+			position_x = excluded.position_x,
+			position_y = excluded.position_y,
+			position_z = excluded.position_z,
+			rotation_x = excluded.rotation_x,
+			rotation_y = excluded.rotation_y,
+			rotation_z = excluded.rotation_z;
+	"""
+	var position = player.position
+	var rotation = player.rotation
+	var bindings = [position.x, position.y, position.z, rotation.x, rotation.y, rotation.z, id]
+	if not _database.query_with_bindings(sql, bindings):
+		push_error("Failed to save player")
+	_mutex.unlock()
+
+func load_player(player: Player, id: int) -> void:
+	_mutex.lock()
+	if _database == null:
+		_mutex.unlock()
+		return
+	var sql = """
+		SELECT position_x, position_y, position_z,
+			   rotation_x, rotation_y, rotation_z
+		FROM players
+		WHERE id = ?;
+	"""
+	var bindings = [id]
+	if not _database.query_with_bindings(sql, bindings):
+		push_error("Failed to load player")
+		_mutex.unlock()
+		return
+	var result = _database.query_result
+	if result.is_empty():
+		print("Failed to load player")
+		_mutex.unlock()
+		return
+	result = result[0]
+	player.position = Vector3(result.position_x, result.position_y, result.position_z)
+	player.rotation = Vector3(result.rotation_x, result.rotation_y, result.rotation_z)
+	_mutex.unlock()
