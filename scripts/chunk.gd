@@ -1,7 +1,6 @@
 class_name Chunk
 extends StaticBody3D
 
-const HIGH_PRIORITY = false
 const WIDTH = 10
 const HEIGHT = 128
 const SIZE = Vector3i(WIDTH, HEIGHT, WIDTH)
@@ -129,7 +128,7 @@ func generate() -> void:
 	assert(!has_flag(Flag.MESHED))
 	assert(!has_flag(Flag.WORKING))
 	set_flag(Flag.GENERATING)
-	var task_id = WorkerThreadPool.add_task(_generate, HIGH_PRIORITY)
+	var task_id = WorkerThreadPool.add_task(_generate)
 	_world.add_task_id(task_id)
 
 func mesh(async: bool, force = false) -> void:
@@ -145,11 +144,17 @@ func mesh(async: bool, force = false) -> void:
 	if not async:
 		_mesh()
 		return
-	var task_id = WorkerThreadPool.add_task(_mesh, HIGH_PRIORITY)
+	var task_id = WorkerThreadPool.add_task(_mesh)
 	_world.add_task_id(task_id)
 
 func _generate() -> void:
 	_all_blocks = _world.generator.generate(_index)
+	var blocks = _world.database.get_blocks(_index)
+	for block in blocks:
+		assert(block.type != Block.Type.EMPTY)
+		var index = Vector3i(block.block_x, block.block_y, block.block_z)
+		assert(in_bounds(index))
+		_all_blocks[index] = block.type
 	_end_generate.call_deferred(WorkerThreadPool.get_caller_task_id())
 
 func _mesh() -> void:

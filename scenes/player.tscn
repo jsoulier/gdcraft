@@ -22,6 +22,7 @@ shading_mode = 0
 albedo_texture = SubResource("GradientTexture1D_qhqgy")
 
 [node name="Player" type="CharacterBody3D"]
+collision_layer = 0
 script = ExtResource("1_3vyb7")
 
 [node name="Head" type="Node3D" parent="."]

@@ -1,4 +1,5 @@
 class_name Generator
+extends Node
 
 enum Type {
 	NOISE,
@@ -6,8 +7,8 @@ enum Type {
 	DEBUG,
 }
 
-var type = Type.NOISE
-var generator_seed = 1337
+@export var type = Type.NOISE
+@export var generator_seed = 1337
 var _base_generator := FastNoiseLite.new()
 var _overlay_generator := FastNoiseLite.new()
 var _foliage_generator := FastNoiseLite.new()

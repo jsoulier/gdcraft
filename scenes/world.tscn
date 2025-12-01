@@ -2,38 +2,23 @@
 
 [ext_resource type="Script" uid="uid://dlsmcj6x7owv3" path="res://scripts/world.gd" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://cb7wm23xxaibd" path="res://scenes/player.tscn" id="2_rwgxs"]
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_rwgxs"]
-
-[sub_resource type="Sky" id="Sky_4wyf3"]
-sky_material = SubResource("ProceduralSkyMaterial_rwgxs")
-
-[sub_resource type="Environment" id="Environment_4wyf3"]
-background_mode = 2
-sky = SubResource("Sky_4wyf3")
-ssao_enabled = true
-ssao_radius = 1.05
-ssao_light_affect = 1.0
-ssao_ao_channel_affect = 0.8
-fog_enabled = true
-fog_mode = 1
-fog_light_energy = 0.0
-fog_density = 0.005
-fog_aerial_perspective = 1.0
-fog_depth_begin = 120.0
-fog_depth_end = 150.0
+[ext_resource type="PackedScene" uid="uid://c0ty3ddv0ai0c" path="res://scenes/sky.tscn" id="3_71j4m"]
+[ext_resource type="Script" uid="uid://d1e5o4oltwogc" path="res://scripts/generator.gd" id="3_k0juu"]
+[ext_resource type="Script" uid="uid://blm8g5wvjs8dp" path="res://scripts/database.gd" id="4_71j4m"]
 
 [node name="World" type="Node"]
 script = ExtResource("1_nnsk1")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_4wyf3")
-
-[node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 1, 1)
-light_energy = 0.5
-shadow_enabled = true
-
 [node name="Player" parent="." instance=ExtResource("2_rwgxs")]
+
+[node name="Sky" parent="." instance=ExtResource("3_71j4m")]
+
+[node name="Generator" type="Node" parent="."]
+script = ExtResource("3_k0juu")
+metadata/_custom_type_script = "uid://d1e5o4oltwogc"
+
+[node name="Database" type="Node" parent="."]
+script = ExtResource("4_71j4m")
+metadata/_custom_type_script = "uid://blm8g5wvjs8dp"
 
 [connection signal="set_block" from="Player" to="." method="_on_player_set_block"]

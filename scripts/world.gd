@@ -1,11 +1,11 @@
 class_name World
 extends Node
 
-const LOAD_RADIUS = 10
-const UNLOAD_RADIUS = 12
-
+@export var load_radius = 10
+@export var unload_radius = 12
 @onready var _player: Player = $Player
-var generator = Generator.new()
+@onready var generator: Generator = $Generator
+@onready var database: Database = $Database
 var max_workers = OS.get_processor_count()
 var _chunks: Dictionary[Vector3i, Chunk] = {}
 var _generate_chunks: Array[Vector3i] = []
@@ -14,9 +14,9 @@ var _player_chunk_index = Vector3i.ZERO
 var _task_ids: Dictionary[int, bool] = {}
 
 func _init() -> void:
-	var mesh_radius = LOAD_RADIUS - 1
-	for x in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
-		for y in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
+	var mesh_radius = load_radius - 1
+	for x in range(-load_radius, load_radius + 1):
+		for y in range(-load_radius, load_radius + 1):
 			_generate_chunks.append(Vector3i(x, 0, y))
 	for x in range(-mesh_radius, mesh_radius + 1):
 		for y in range(-mesh_radius, mesh_radius + 1):
@@ -30,12 +30,8 @@ func _notification(what: int) -> void:
 
 func _in_bounds(index: Vector3i) -> bool:
 	index -= _player_chunk_index
-	return index.x >= -UNLOAD_RADIUS and index.x <= UNLOAD_RADIUS \
-		and index.z >= -UNLOAD_RADIUS and index.z <= UNLOAD_RADIUS
-	
-func _ready() -> void:
-	generator.type = Generator.Type.NOISE
-	generator.generator_seed = 1337
+	return index.x >= -unload_radius and index.x <= unload_radius \
+		and index.z >= -unload_radius and index.z <= unload_radius
 
 func _sort(a: Vector3i, b: Vector3i) -> bool:
 	assert(a.y == 0 and b.y == 0)
@@ -152,3 +148,4 @@ func _on_player_set_block(index: Vector3i, type: Block.Type) -> void:
 		_remesh(chunk_index - Vector3i(0, 0, 1))
 	elif block_index.z == Chunk.SIZE.z - 1:
 		_remesh(chunk_index + Vector3i(0, 0, 1))
+	database.set_block(chunk_index, block_index, type)

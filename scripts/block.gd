@@ -1,6 +1,7 @@
 class_name Block
 
 enum Type {
+	EMPTY,
 	GRASS,
 	DIRT,
 	STONE,
@@ -8,7 +9,6 @@ enum Type {
 	LOG,
 	LEAVES,
 	SAND,
-	EMPTY,
 }
 
 static var _VERTICES = PackedVector3Array([

@@ -1,10 +1,10 @@
 class_name Resources
 extends Node
 
-const SPRITE_SIZE = 16
 const SPRITESHEET = preload("res://resources/spritesheet.png")
 const OPAQUE_SHADER = preload("res://resources/opaque.gdshader")
 const TRANSPARENT_SHADER = preload("res://resources/transparent.gdshader")
+const SIZE = 16
 
 var opaque_material: ShaderMaterial = null
 var transparent_material: ShaderMaterial = null
@@ -25,16 +25,16 @@ func _create_spritesheet() -> Texture2DArray:
 	if image.is_compressed():
 		image.decompress()
 	@warning_ignore_start("integer_division")
-	var columns = image.get_width() / SPRITE_SIZE 
-	var rows = image.get_height() / SPRITE_SIZE 
+	var columns = image.get_width() / SIZE 
+	var rows = image.get_height() / SIZE 
 	@warning_ignore_restore("integer_division")
 	var images = []
 	for y in range(rows):
 		for x in range(columns):
-			var layer = Image.create_empty(SPRITE_SIZE, SPRITE_SIZE, true, image.get_format())
-			for i in range(SPRITE_SIZE):
-				for j in range(SPRITE_SIZE):
-					var color = image.get_pixel(x * SPRITE_SIZE + i, y * SPRITE_SIZE + j)
+			var layer = Image.create_empty(SIZE, SIZE, true, image.get_format())
+			for i in range(SIZE):
+				for j in range(SIZE):
+					var color = image.get_pixel(x * SIZE + i, y * SIZE + j)
 					layer.set_pixel(i, j, color)
 			layer.generate_mipmaps()
 			images.append(layer)
