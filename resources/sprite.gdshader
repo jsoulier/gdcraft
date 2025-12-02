@@ -1,0 +1,15 @@
+shader_type spatial;
+
+#include "spritesheet.gdshaderinc"
+
+render_mode cull_back;
+render_mode depth_draw_always;
+
+void fragment() {
+	vec4 color = get_color(UV, UV2);
+	ALBEDO = color.rgb;
+	if (color.a < 0.001f)
+	{
+		discard;
+	}
+}

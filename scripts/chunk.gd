@@ -18,6 +18,7 @@ enum Flag {
 enum MeshType {
 	OPAQUE,
 	TRANSPARENT,
+	SPRITE,
 	COUNT,
 }
 
@@ -88,6 +89,8 @@ func _exposed(index: Vector3i) -> bool:
 	var block = _all_blocks.get(index, Block.Type.EMPTY)
 	if block == Block.Type.EMPTY:
 		return false
+	if Block.is_sprite(block):
+		return true
 	for face in range(Face.Type.COUNT):
 		if _skip_face(index, face):
 			continue
@@ -166,6 +169,10 @@ func _mesh() -> void:
 	for index in _exposed_blocks:
 		var block = _all_blocks.get(index, Block.Type.EMPTY)
 		assert(block != Block.Type.EMPTY)
+		if Block.is_sprite(block):
+			for face in range(4):
+				_emit_face(_meshes[MeshType.SPRITE], index, block, face)
+			continue
 		for face in range(Face.Type.COUNT):
 			if _skip_face(index, face):
 				continue
@@ -249,6 +256,8 @@ func _create_mesh_instance(arrays: Array, type: MeshType) -> MeshInstance3D:
 			mesh_instance.material_override = GDCraftResources.opaque_material
 		MeshType.TRANSPARENT:
 			mesh_instance.material_override = GDCraftResources.transparent_material
+		MeshType.SPRITE:
+			mesh_instance.material_override = GDCraftResources.sprite_material
 	return mesh_instance
 
 func _create_collision_shape(arrays: Array) -> CollisionShape3D:

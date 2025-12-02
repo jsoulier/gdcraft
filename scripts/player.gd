@@ -16,6 +16,7 @@ var _block_type = Block.Type.GRASS
 
 func _ready() -> void:
 	_switch_block(0)
+	position.y = 30
 
 func _switch_block(delta: int) -> void:
 	var count = Block.Type.COUNT

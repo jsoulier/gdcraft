@@ -52,9 +52,11 @@ func _noise(index: Vector3i, blocks: Dictionary[Vector3i, Block.Type]) -> void:
 				elif y == noise - 1:
 					blocks[block_index] = Block.Type.GRASS
 					var foliage_noise = _foliage_generator.get_noise_2d(block_x, block_z)
-					var foliage_probability = int(foliage_noise * 13793) % 100
-					if foliage_probability < 2 and _tree_in_bounds(x, z):
+					var foliage_value = int(foliage_noise * 13793) % 100
+					if foliage_value < 2 and _tree_in_bounds(x, z):
 						_tree(blocks, x, noise - start_y, z)
+					else:
+						_foliage(blocks, block_index + Vector3i.UP, foliage_value)
 				elif y > noise - 4:
 					blocks[block_index] = Block.Type.DIRT
 				else:
@@ -74,6 +76,22 @@ func _tree(blocks: Dictionary[Vector3i, Block.Type], x: int, y: int, z: int) -> 
 				var index = Vector3i(x + lx, y + height - 2 + ly, z + lz)
 				if Chunk.in_bounds(index) and index not in blocks:
 					blocks[index] = Block.Type.LEAVES
+
+func _foliage(blocks: Dictionary[Vector3i, Block.Type], index: Vector3i, value: int) -> void:
+	if value > 10 and value < 50:
+		blocks[index] = Block.Type.BUSH
+	elif value > 50 and value < 53:
+		blocks[index] = Block.Type.POPPY
+	elif value > 56 and value < 59:
+		blocks[index] = Block.Type.DANDELION
+	elif value > 62 and value < 65:
+		blocks[index] = Block.Type.DAISY
+	elif value > 68 and value < 71:
+		blocks[index] = Block.Type.CORNFLOWER
+	elif value > 74 and value < 77:
+		blocks[index] = Block.Type.MARIGOLD
+	elif value > 80 and value < 83:
+		blocks[index] = Block.Type.LAVENDER
 
 func _tree_in_bounds(x: int, z: int) -> bool:
 	return x > 1 and z > 1 and x < Chunk.SIZE.x - 2 and z < Chunk.SIZE.z - 2
