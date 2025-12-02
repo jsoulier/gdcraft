@@ -10,6 +10,6 @@ Tiny Minecraft clone in Godot using GDScript
 - Procedural world generation
 - Asynchronous chunk loading
 - Blocks and plants
-- Point lights
 - Persistent worlds
-- Day night cycle
+- Day and night cycle
+- Dynamic lighting
