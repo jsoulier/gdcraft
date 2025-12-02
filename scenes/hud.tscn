@@ -16,28 +16,12 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ahhtf")
 
-[node name="Crosshair" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Vertical" type="ColorRect" parent="Crosshair"]
-custom_minimum_size = Vector2(4, 16)
-layout_mode = 2
-
-[node name="Horizontal" type="ColorRect" parent="Crosshair"]
-custom_minimum_size = Vector2(16, 4)
-layout_mode = 2
-
 [node name="Stats" type="VBoxContainer" parent="."]
 visible = false
 layout_mode = 1
 offset_left = 2.0
 offset_right = 3.0
-offset_bottom = 84.0
+offset_bottom = 98.0
 theme_override_constants/separation = 0
 
 [node name="FPS" type="Label" parent="Stats"]
@@ -68,17 +52,44 @@ theme_override_font_sizes/font_size = 10
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 
-[node name="Block" type="CenterContainer" parent="."]
+[node name="Crosshair" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Vertical" type="ColorRect" parent="Crosshair"]
+custom_minimum_size = Vector2(4, 16)
+layout_mode = 2
+
+[node name="Horizontal" type="ColorRect" parent="Crosshair"]
+custom_minimum_size = Vector2(16, 4)
+layout_mode = 2
+
+[node name="BlockH" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -100.0
-offset_right = 100.0
+offset_top = -107.0
+offset_right = 114.0
 grow_vertical = 0
+alignment = 1
 
-[node name="Texture" type="TextureRect" parent="Block"]
+[node name="BlockV" type="VBoxContainer" parent="BlockH"]
+layout_mode = 2
+alignment = 1
+
+[node name="Texture" type="TextureRect" parent="BlockH/BlockV"]
 texture_filter = 1
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 texture = SubResource("AtlasTexture_oo0fn")
+
+[node name="Label" type="Label" parent="BlockH/BlockV"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "placeholder"
+horizontal_alignment = 1

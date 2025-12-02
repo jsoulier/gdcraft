@@ -15,7 +15,13 @@ enum Type {
 	CORNFLOWER,
 	MARIGOLD,
 	LAVENDER,
-	TORCH,
+	RED_TORCH,
+	YELLOW_TORCH,
+	GREEN_TORCH,
+	BLUE_TORCH,
+	CYAN_TORCH,
+	MAGENTA_TORCH,
+	WHITE_TORCH,
 	COUNT,
 	EMPTY,
 }
@@ -68,25 +74,22 @@ static func get_vertex(_type: Type, face: Face.Type, index: int) -> Vector3:
 	if is_sprite(_type):
 		assert(face < 4)
 		return _SPRITE_VERTICES[face * 4 + index]
-	else:
-		assert(face < Face.Type.COUNT)
-		return _VERTICES[face * 4 + index]
+	assert(face < Face.Type.COUNT)
+	return _VERTICES[face * 4 + index]
 
 static func get_texcoord2(_type: Type, face: Face.Type, index: int) -> Vector2:
 	if is_sprite(_type):
 		assert(face < 4)
 		return _SPRITE_TEXCOORDS[face * 4 + index]
-	else:
-		assert(face < Face.Type.COUNT)
-		return _TEXCOORDS[face * 4 + index]
+	assert(face < Face.Type.COUNT)
+	return _TEXCOORDS[face * 4 + index]
 
 static func get_normal(_type: Type, face: Face.Type) -> Vector3i:
 	if is_sprite(_type):
 		assert(face < 4)
 		return _SPRITE_NORMALS[face]
-	else:
-		assert(face < Face.Type.COUNT)
-		return Face.get_vector(face)
+	assert(face < Face.Type.COUNT)
+	return Face.get_vector(face)
 
 static func get_texcoord(type: Type, face: Face.Type) -> Vector2:
 	match type:
@@ -128,9 +131,21 @@ static func get_texcoord(type: Type, face: Face.Type) -> Vector2:
 			return Vector2(14, 0)
 		Type.LAVENDER:
 			return Vector2(15, 0)
-		Type.TORCH:
+		Type.YELLOW_TORCH:
 			return Vector2(0, 1)
-	return Vector2(0, 0)
+		Type.RED_TORCH:
+			return Vector2(1, 1)
+		Type.BLUE_TORCH:
+			return Vector2(2, 1)
+		Type.GREEN_TORCH:
+			return Vector2(3, 1)
+		Type.CYAN_TORCH:
+			return Vector2(4, 1)
+		Type.MAGENTA_TORCH:
+			return Vector2(5, 1)
+		Type.WHITE_TORCH:
+			return Vector2(6, 1)
+	return Vector2.ZERO
 
 static func is_transparent(type: Type) -> bool:
 	match type:
@@ -138,8 +153,8 @@ static func is_transparent(type: Type) -> bool:
 			return true
 	return false
 
-static func is_sprite(_type: Type) -> bool:
-	match _type:
+static func is_sprite(type: Type) -> bool:
+	match type:
 		Type.BUSH:
 			return true
 		Type.POPPY:
@@ -154,9 +169,69 @@ static func is_sprite(_type: Type) -> bool:
 			return true
 		Type.LAVENDER:
 			return true
-		Type.TORCH:
+		Type.YELLOW_TORCH:
+			return true
+		Type.RED_TORCH:
+			return true
+		Type.BLUE_TORCH:
+			return true
+		Type.GREEN_TORCH:
+			return true
+		Type.CYAN_TORCH:
+			return true
+		Type.MAGENTA_TORCH:
+			return true
+		Type.WHITE_TORCH:
 			return true
 	return false
+
+static func is_light(type: Type) -> bool:
+	match type:
+		Type.YELLOW_TORCH:
+			return true
+		Type.RED_TORCH:
+			return true
+		Type.BLUE_TORCH:
+			return true
+		Type.GREEN_TORCH:
+			return true
+		Type.CYAN_TORCH:
+			return true
+		Type.MAGENTA_TORCH:
+			return true
+		Type.WHITE_TORCH:
+			return true
+	return false
+
+static func get_light_color(type: Type) -> Color:
+	match type:
+		Type.YELLOW_TORCH:
+			return Color(1.0, 1.0, 0.0)
+		Type.RED_TORCH:
+			return Color(1.0, 0.0, 0.0)
+		Type.BLUE_TORCH:
+			return Color(0.0, 0.0, 1.0)
+		Type.GREEN_TORCH:
+			return Color(0.0, 1.0, 0.0)
+		Type.CYAN_TORCH:
+			return Color(0.0, 1.0, 1.0)
+		Type.MAGENTA_TORCH:
+			return Color(1.0, 0.0, 1.0)
+		Type.WHITE_TORCH:
+			return Color(1.0, 1.0, 1.0)
+	return Color()
+
+static func get_light_strength(type: Type) -> Vector3:
+	match type:
+		Type.YELLOW_TORCH, \
+		Type.RED_TORCH, \
+		Type.BLUE_TORCH, \
+		Type.GREEN_TORCH, \
+		Type.CYAN_TORCH, \
+		Type.MAGENTA_TORCH, \
+		Type.WHITE_TORCH:
+			return Vector3(5, 0.02, 1.0)
+	return Vector3.ZERO
 
 static func is_exposed(lhs: Type, rhs: Type) -> bool:
 	assert(lhs != Type.EMPTY)

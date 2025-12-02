@@ -27,6 +27,7 @@ var _index: Vector3i
 var _flags = Flag.NONE
 var _all_blocks: Dictionary[Vector3i, Block.Type] = {}
 var _exposed_blocks: Dictionary[Vector3i, bool] = {}
+var _lights: Dictionary[Vector3i, OmniLight3D] = {}
 
 func _init(world, index: Vector3i) -> void:
 	_world = world
@@ -124,7 +125,25 @@ func set_block(index: Vector3i, type: Block.Type) -> void:
 		_exposed_blocks.erase(neighbor_index)
 		if _exposed(neighbor_index):
 			_exposed_blocks[neighbor_index] = false
+	set_light(index, type)
 	clear_flag(Chunk.Flag.MESHED)
+
+func set_light(index: Vector3i, type: Block.Type) -> void:
+	var light = _lights.get(index, null)
+	if light:
+		remove_child(light)
+	_lights.erase(index)
+	if not Block.is_light(type):
+		return
+	light = OmniLight3D.new()
+	light.light_color = Block.get_light_color(type)
+	light.position = Vector3(_index * SIZE + index) + Vector3.ONE / 2
+	var strength = Block.get_light_strength(type)
+	light.omni_range = strength.x
+	light.omni_attenuation = strength.y
+	light.light_energy = strength.z
+	add_child.call_deferred(light)
+	_lights[index] = light
 
 func generate() -> void:
 	assert(!has_flag(Flag.GENERATED))
@@ -141,6 +160,8 @@ func mesh(async: bool, force = false) -> void:
 		clear_flag(Flag.MESHED)
 	assert(!has_flag(Flag.MESHED))
 	for child in get_children():
+		if child is OmniLight3D:
+			continue
 		remove_child(child)
 		child.queue_free()
 	set_flag(Flag.MESHING)
@@ -158,6 +179,7 @@ func _generate() -> void:
 		var index = Vector3i(block.block_x, block.block_y, block.block_z)
 		assert(in_bounds(index))
 		_all_blocks[index] = block.type
+		set_light(index, block.type)
 	_end_generate.call_deferred(WorkerThreadPool.get_caller_task_id())
 
 func _mesh() -> void:
@@ -186,8 +208,11 @@ func _mesh() -> void:
 				_emit_face(_meshes[MeshType.TRANSPARENT], index, block, face)
 	for type in range(MeshType.COUNT):
 		var mesh_instance = _create_mesh_instance(_meshes[type], type)
-		if mesh_instance:
-			add_child.call_deferred(mesh_instance)
+		if not mesh_instance:
+			continue
+		if type == MeshType.SPRITE:
+			mesh_instance.cast_shadow = false
+		add_child.call_deferred(mesh_instance)
 	var collision_shape = _create_collision_shape(_meshes[MeshType.OPAQUE])
 	add_child.call_deferred(collision_shape)
 	_end_mesh.call_deferred(WorkerThreadPool.get_caller_task_id())

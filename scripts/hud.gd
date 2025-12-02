@@ -8,7 +8,8 @@ extends Node
 @onready var _video_memory_used_label = $Stats/VideoMemoryUsed
 @onready var _draw_calls_label = $Stats/DrawCalls
 @onready var _primitives_label = $Stats/Primitives
-@onready var _block_texture: TextureRect = $Block/Texture
+@onready var _block_texture: TextureRect = $BlockH/BlockV/Texture
+@onready var _block_label: Label = $BlockH/BlockV/Label
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
@@ -35,3 +36,8 @@ func _on_player_switch_block(type: Block.Type) -> void:
 	var size = GDCraftResources.SIZE
 	var texcoord = Block.get_texcoord(type, Face.Type.FORWARD) * size
 	_block_texture.texture.region = Rect2(texcoord.x, texcoord.y, size, size)
+	var text: String = Block.Type.keys()[type].replace("_", " ")
+	var strings: PackedStringArray = text.split(" ")
+	for i in range(strings.size()):
+		strings[i] = strings[i].capitalize()
+	_block_label.text = " ".join(strings)
