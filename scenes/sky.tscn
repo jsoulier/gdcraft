@@ -1,0 +1,41 @@
+[gd_scene load_steps=5 format=3 uid="uid://c0ty3ddv0ai0c"]
+
+[ext_resource type="Script" uid="uid://bpl0i2gs6u5tw" path="res://scripts/sky.gd" id="1_k1tqj"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qk45w"]
+
+[sub_resource type="Sky" id="Sky_4wyf3"]
+sky_material = SubResource("ProceduralSkyMaterial_qk45w")
+
+[sub_resource type="Environment" id="Environment_3hy4n"]
+background_mode = 2
+sky = SubResource("Sky_4wyf3")
+ssao_enabled = true
+ssao_radius = 1.05
+ssao_light_affect = 1.0
+ssao_ao_channel_affect = 0.8
+ssil_enabled = true
+ssil_radius = 10.0
+ssil_intensity = 0.75
+fog_enabled = true
+fog_mode = 1
+fog_light_energy = 0.0
+fog_density = 1.0
+fog_aerial_perspective = 1.0
+fog_depth_curve = 1.5
+fog_depth_begin = 120.0
+fog_depth_end = 150.0
+
+[node name="Sky" type="Node"]
+script = ExtResource("1_k1tqj")
+sunrise_length = 20.0
+sunset_length = 20.0
+speed = 2.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_3hy4n")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.92387944, -0.27059802, 0.27059802, 0, 0.7071067, 0.7071067, -0.38268343, -0.6532814, 0.6532814, 0, 1, 1)
+shadow_enabled = true
+sky_mode = 1

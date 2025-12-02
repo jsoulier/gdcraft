@@ -1,0 +1,26 @@
+[gd_scene load_steps=6 format=3 uid="uid://dosvcntvvmsbg"]
+
+[ext_resource type="Script" uid="uid://dlsmcj6x7owv3" path="res://scripts/world.gd" id="1_nnsk1"]
+[ext_resource type="PackedScene" uid="uid://cb7wm23xxaibd" path="res://scenes/player.tscn" id="2_rwgxs"]
+[ext_resource type="PackedScene" uid="uid://c0ty3ddv0ai0c" path="res://scenes/sky.tscn" id="3_71j4m"]
+[ext_resource type="Script" uid="uid://d1e5o4oltwogc" path="res://scripts/generator.gd" id="3_k0juu"]
+[ext_resource type="Script" uid="uid://blm8g5wvjs8dp" path="res://scripts/database.gd" id="4_71j4m"]
+
+[node name="World" type="Node"]
+script = ExtResource("1_nnsk1")
+load_radius = 15
+unload_radius = 18
+
+[node name="Player" parent="." instance=ExtResource("2_rwgxs")]
+
+[node name="Sky" parent="." instance=ExtResource("3_71j4m")]
+
+[node name="Generator" type="Node" parent="."]
+script = ExtResource("3_k0juu")
+metadata/_custom_type_script = "uid://d1e5o4oltwogc"
+
+[node name="Database" type="Node" parent="."]
+script = ExtResource("4_71j4m")
+metadata/_custom_type_script = "uid://blm8g5wvjs8dp"
+
+[connection signal="set_block" from="Player" to="." method="_on_player_set_block"]

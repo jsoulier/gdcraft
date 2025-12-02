@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://dssrxsmjsw5bg"]
+
+[sub_resource type="GDScript" id="GDScript_sgp6g"]
+script/source = "class_name Main
+extends Node
+
+const WORLD = preload(\"res://scenes/world.tscn\")
+
+func _ready() -> void:
+	add_child(WORLD.instantiate())
+"
+
+[node name="Main" type="Node"]
+script = SubResource("GDScript_sgp6g")
