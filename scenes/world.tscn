@@ -8,6 +8,8 @@
 
 [node name="World" type="Node"]
 script = ExtResource("1_nnsk1")
+load_radius = 15
+unload_radius = 18
 
 [node name="Player" parent="." instance=ExtResource("2_rwgxs")]
 

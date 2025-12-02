@@ -22,11 +22,14 @@ enum Type {
 	CYAN_TORCH,
 	MAGENTA_TORCH,
 	WHITE_TORCH,
+	PLANKS,
+	GLASS,
 	COUNT,
 	EMPTY,
 }
 
 static var _INDICES = PackedInt32Array([0, 1, 2, 0, 2, 3])
+static var _TORCH_LIGHT_STRENGTH = Vector3(5, 0.02, 1.0)
 
 static var _VERTICES = PackedVector3Array([
 	Vector3(0, 1, 1), Vector3(1, 1, 1), Vector3(1, 0, 1), Vector3(0, 0, 1),
@@ -145,11 +148,17 @@ static func get_texcoord(type: Type, face: Face.Type) -> Vector2:
 			return Vector2(5, 1)
 		Type.WHITE_TORCH:
 			return Vector2(6, 1)
+		Type.PLANKS:
+			return Vector2(7, 1)
+		Type.GLASS:
+			return Vector2(8, 1)
 	return Vector2.ZERO
 
 static func is_transparent(type: Type) -> bool:
 	match type:
 		Type.WATER:
+			return true
+		Type.GLASS:
 			return true
 	return false
 
@@ -223,14 +232,20 @@ static func get_light_color(type: Type) -> Color:
 
 static func get_light_strength(type: Type) -> Vector3:
 	match type:
-		Type.YELLOW_TORCH, \
-		Type.RED_TORCH, \
-		Type.BLUE_TORCH, \
-		Type.GREEN_TORCH, \
-		Type.CYAN_TORCH, \
-		Type.MAGENTA_TORCH, \
+		Type.YELLOW_TORCH:
+			return _TORCH_LIGHT_STRENGTH
+		Type.RED_TORCH:
+			return _TORCH_LIGHT_STRENGTH
+		Type.BLUE_TORCH:
+			return _TORCH_LIGHT_STRENGTH
+		Type.GREEN_TORCH:
+			return _TORCH_LIGHT_STRENGTH
+		Type.CYAN_TORCH:
+			return _TORCH_LIGHT_STRENGTH
+		Type.MAGENTA_TORCH:
+			return _TORCH_LIGHT_STRENGTH
 		Type.WHITE_TORCH:
-			return Vector3(5, 0.02, 1.0)
+			return _TORCH_LIGHT_STRENGTH
 	return Vector3.ZERO
 
 static func is_exposed(lhs: Type, rhs: Type) -> bool:

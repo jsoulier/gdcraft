@@ -4,7 +4,8 @@ shader_type spatial;
 
 render_mode cull_back;
 render_mode depth_draw_opaque;
+render_mode vertex_lighting;
 
 void fragment() {
-	ALBEDO = get_color(UV, UV2).rgb;
+	ALBEDO = get_color(UV, UV2, false).rgb;
 }

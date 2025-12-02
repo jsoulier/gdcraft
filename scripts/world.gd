@@ -6,6 +6,7 @@ extends Node
 @export var player_id = 0
 @export var max_workers = 8
 @onready var _player = $Player
+@onready var _sky = $Sky
 @onready var generator = $Generator
 @onready var database = $Database
 var _chunks: Dictionary[Vector3i, Chunk] = {}
@@ -24,15 +25,18 @@ func _ready() -> void:
 			_mesh_chunks.append(Vector3i(x, 0, y))
 	_mesh_chunks.sort_custom(_sort)
 	database.load_player(_player, player_id)
+	database.load_sky(_sky)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		for task_id in _task_ids:
 			WorkerThreadPool.wait_for_task_completion(task_id)
 		database.save_player(_player, player_id)
+		database.save_sky(_sky)
 
 func _in_bounds(index: Vector3i) -> bool:
 	assert(index.y == 0)
+	assert(load_radius <= unload_radius)
 	index -= _player_chunk_index
 	return index.x >= -unload_radius and index.x <= unload_radius \
 		and index.z >= -unload_radius and index.z <= unload_radius

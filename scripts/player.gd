@@ -14,9 +14,11 @@ var _raycast_break_position: Vector3i
 var _raycast_place_position: Vector3i
 var _block_type = Block.Type.GRASS
 
+func _init() -> void:
+	position.y = 30
+
 func _ready() -> void:
 	_switch_block(0)
-	position.y = 30
 
 func _switch_block(delta: int) -> void:
 	var count = Block.Type.COUNT
@@ -51,28 +53,29 @@ func _input(event: InputEvent) -> void:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _physics_process(_delta) -> void:
-	var direction = Vector3.ZERO
-	var up = Vector3.ZERO
-	var speed = walk_speed
-	if Input.is_action_pressed(&"right"):
-		direction.x += 1
-	if Input.is_action_pressed(&"left"):
-		direction.x -= 1
-	if Input.is_action_pressed(&"back"):
-		direction.z += 1
-	if Input.is_action_pressed(&"forward"):
-		direction.z -= 1
-	if Input.is_action_pressed(&"jump"):
-		up.y += 1
-	if Input.is_action_pressed(&"crouch"):
-		up.y -= 1
-	if Input.is_action_pressed(&"sprint"):
-		speed = sprint_speed
-	direction = direction.normalized()
-	direction = (_head.global_transform.basis * direction).normalized()
-	direction = (direction + up).normalized()
-	velocity = direction * speed
-	move_and_slide()
+	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+		var direction = Vector3.ZERO
+		var up = Vector3.ZERO
+		var speed = walk_speed
+		if Input.is_action_pressed(&"right"):
+			direction.x += 1
+		if Input.is_action_pressed(&"left"):
+			direction.x -= 1
+		if Input.is_action_pressed(&"back"):
+			direction.z += 1
+		if Input.is_action_pressed(&"forward"):
+			direction.z -= 1
+		if Input.is_action_pressed(&"jump"):
+			up.y += 1
+		if Input.is_action_pressed(&"crouch"):
+			up.y -= 1
+		if Input.is_action_pressed(&"sprint"):
+			speed = sprint_speed
+		direction = direction.normalized()
+		direction = (_head.global_transform.basis * direction).normalized()
+		direction = (direction + up).normalized()
+		velocity = direction * speed
+		move_and_slide()
 	_raycast_block.visible = _raycast.is_colliding()
 	if not _raycast.is_colliding():
 		return

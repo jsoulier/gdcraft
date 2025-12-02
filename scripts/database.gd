@@ -50,6 +50,20 @@ func _init() -> void:
 	"""
 	if not _database.query(players_index):
 		push_error("Failed to create players index")
+	var sky_table = """
+		CREATE TABLE IF NOT EXISTS sky (
+			id INTEGER PRIMARY KEY,
+			time_of_day INTEGER NOT NULL
+		);
+	"""
+	if not _database.query(sky_table):
+		push_error("Failed to create sky table")
+	var sky_index = """
+		CREATE INDEX IF NOT EXISTS sky_index
+		ON sky (id);
+	"""
+	if not _database.query(sky_index):
+		push_error("Failed to create sky index")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
@@ -153,4 +167,45 @@ func load_player(player: Player, id: int) -> void:
 	result = result[0]
 	player.position = Vector3(result.position_x, result.position_y, result.position_z)
 	player.rotation = Vector3(result.rotation_x, result.rotation_y, result.rotation_z)
+	_mutex.unlock()
+
+func save_sky(sky: GDCraftSky) -> void:
+	_mutex.lock()
+	if _database == null:
+		_mutex.unlock()
+		return
+	var sql = """
+		INSERT INTO sky
+		(time_of_day, id)
+		VALUES (?, ?)
+		ON CONFLICT(id)
+		DO UPDATE SET time_of_day = excluded.time_of_day;
+	"""
+	var bindings = [sky.time_of_day, 0]
+	if not _database.query_with_bindings(sql, bindings):
+		push_error("Failed to save sky")
+	_mutex.unlock()
+
+func load_sky(sky: GDCraftSky) -> void:
+	_mutex.lock()
+	if _database == null:
+		_mutex.unlock()
+		return
+	var sql = """
+		SELECT time_of_day
+		FROM sky
+		WHERE id = ?;
+	"""
+	var bindings = [0]
+	if not _database.query_with_bindings(sql, bindings):
+		push_error("Failed to load sky")
+		_mutex.unlock()
+		return
+	var result = _database.query_result
+	if result.is_empty():
+		print("Failed to load sky")
+		_mutex.unlock()
+		return
+	result = result[0]
+	sky.time_of_day = result.time_of_day
 	_mutex.unlock()
