@@ -3,7 +3,7 @@
 ![](doc/image1.png)
 ![](doc/image2.png)
 
-Minecraft clone in Godot using GDScript
+Tiny Minecraft clone in Godot using GDScript
 
 # Features
 
