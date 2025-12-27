@@ -1,7 +1,6 @@
 # GDCraft
 
-![](doc/image1.png)
-![](doc/image2.png)
+![](doc/image.png)
 
 Tiny Minecraft clone in Godot using GDScript
 

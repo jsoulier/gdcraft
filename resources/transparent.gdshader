@@ -2,6 +2,7 @@ shader_type spatial;
 
 #include "spritesheet.gdshaderinc"
 
+render_mode cull_disabled;
 render_mode vertex_lighting;
 
 void fragment() {
